@@ -26,6 +26,6 @@ To fetch you secret again to a GET request to `http://localhost:8080/<your-secre
 For example:
 ```bash
 curl --request GET \
-  --url http://localhost:8080/<your-secret-id-goes-here>
+  --url http://localhost:8080/Jsm9nDvKVhtAQEfz1Bukx7jHeKIBpPV8kX0B_a4w2rEqAke0MYJ_uvGc30s6o85TiIn-qeBm_9S55ajlDzysRw
 ```
 
