@@ -18,16 +18,11 @@ func main() {
 	secretStore = make(secret.SecretStore)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", HomeHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/")))).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
-}
-
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Nothing to see here...")
 }
 
 func NewHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +33,11 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	myId := secretStore.Add(post.Content, post.ExpiresIn)
+	myId, err := secretStore.Add(post.Content, post.ExpiresIn)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	fmt.Fprintf(w, "%s", myId)
 }
