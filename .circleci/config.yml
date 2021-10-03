@@ -9,18 +9,18 @@ executors:
       - image: cimg/base:stable-18.04
 
 commands:
-  docker-build:
+  docker_build:
     steps:
       - run:
           name: "Docker: Building"
           command: |
             docker build -t gaardsholt/$CIRCLE_PROJECT_REPONAME:latest ./$CIRCLE_PROJECT_REPONAME
-  docker-login:
+  docker_login:
     steps:
       - run:
           name: "Docker: Logging in"
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
-  docker-push:
+  docker_push:
     steps:
       - run:
           name: "Docker: Push"
