@@ -15,6 +15,7 @@ commands:
           name: "Docker: Building"
           command: |
             docker build -t gaardsholt/$CIRCLE_PROJECT_REPONAME:latest .
+            docker images
   docker_login:
     steps:
       - run:
