@@ -50,7 +50,7 @@ jobs:
 
 
 workflows:
-  test-and-deploy:
+  build:
     jobs:
       - test:
           context: gaardsholt
