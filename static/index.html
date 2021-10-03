@@ -1,64 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <title>Share-A-Password</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --black: #19171a;
-      --red: #e9322e;
-      --white: #f6f6f2;
-      --font-size: 16px;
-    }
-
-
-    body {
-      background-color: var(--black);
-      color: var(--red);
-    }
-
-    button {
-      color: var(--red);
-      background-color: var(--white);
-      border: 2px solid var(--red);
-      padding: 10px 20px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: var(--font-size);
-      cursor: pointer;
-      transition-duration: 0.4s;
-    }
-
-    button:hover {
-      background-color: var(--red);
-      color: var(--white);
-    }
-
-    label {
-      font-size: var(--font-size);
-    }
-
-    textarea {
-      background-color: var(--white);
-      padding: 6px 12px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    select {
-      background-color: var(--white);
-    }
-
-    .center {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
-  </style>
+  <meta name="description" content="This service allows you to share your secrets, securely" />
+  <link rel="stylesheet" href="/css/main.css">
 </head>
 
 <body>
@@ -66,7 +14,7 @@
     <div style="width: 33vw;">
       <h1>Share-A-Password</h1>
       <div>
-        <textarea id="secret-content" placeholder="Enter your message here..." rows="10"></textarea>
+        <textarea id="secret-content" placeholder="Write all of your secrets here..." rows="10"></textarea>
       </div>
       <div style="float:left;">
         <label for="valid-for">Valid for:</label>
@@ -78,36 +26,16 @@
         </select>
       </div>
       <div style="float:right;">
-        <button id="save">Save</button>
+        <button id="save" onclick="save()">Save</button>
       </div>
     </div>
-
+    <div id="result-container" style="display:none;">
+      <button id="copy" onclick="copyShareUrl()">Copy</button>
+      <input id="share-url" type="text" value="hejsa" onClick="this.select();" readonly  />
+    </div>
   </div>
 
-  <script>
-    const saveButton = document.getElementById("save")
-    saveButton.onclick = function () {
-
-      const data = JSON.stringify({
-        "content": document.getElementById("secret-content").value,
-        "expires_in": document.getElementById("valid-for").value
-      });
-
-      const xhr = new XMLHttpRequest();
-      xhr.withCredentials = true;
-
-      xhr.addEventListener("readystatechange", function () {
-        if (this.readyState === this.DONE) {
-          console.log(this.responseText);
-        }
-      });
-
-      xhr.open("POST", "http://localhost:8080/");
-      xhr.setRequestHeader("Content-Type", "application/json");
-
-      xhr.send(data);
-    }
-  </script>
+  <script src="/js/main.js"></script>
 </body>
 
 </html>
