@@ -1,0 +1,58 @@
+version: 2.1
+
+executors:
+  go_image:
+    docker:
+      - image: cimg/go:1.17
+  docker_image:
+    docker:
+      - image: cimg/base:stable-18.04
+
+commands:
+  docker-build:
+    steps:
+      - run:
+          name: "Docker: Building"
+          command: |
+            docker build -t gaardsholt/$CIRCLE_PROJECT_REPONAME:latest ./$CIRCLE_PROJECT_REPONAME
+  docker-login:
+    steps:
+      - run:
+          name: "Docker: Logging in"
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+  docker-push:
+    steps:
+      - run:
+          name: "Docker: Push"
+          command: |
+            docker tag gaardsholt/$CIRCLE_PROJECT_REPONAME:latest gaardsholt/$CIRCLE_PROJECT_REPONAME:${CIRCLE_TAG:1}
+            docker push gaardsholt/$CIRCLE_PROJECT_REPONAME --all-tags
+
+jobs:
+  test:
+    executor: go_image
+    steps:
+      - checkout
+      - run:
+          name: go get
+          command: |
+            go get ./...
+      - run:
+          name: go build
+          command: |
+            go build -ldflags="-w -s"
+  build_docker:
+    executor: docker_image
+    steps:
+      - setup_remote_docker
+      - checkout
+      - docker_build
+
+
+workflows:
+  test-and-deploy:
+    jobs:
+      - test:
+          context: gaardsholt
+      - build_docker:
+          context: gaardsholt
