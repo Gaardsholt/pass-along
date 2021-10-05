@@ -7,10 +7,7 @@ FROM alpine
 COPY --from=builder /tmp/app /app
 
 RUN mkdir -p /config
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser /config
 
-RUN groupadd -g 2000 AppGroup && \
-    useradd -m -u 2001 -g AppGroup AppUser && \
-    chown -R AppUser /config
-
-USER AppUser
+USER appuser
 CMD ["/app"]
