@@ -3,6 +3,11 @@
 > :warning: Very much work in progress !
 
 
+## TODO:
+* Add some server config
+* Security review?
+*  
+
 ## Create a new secret
 
 ```bash
