@@ -15,11 +15,7 @@ commands:
           name: "Docker: Building"
           command: |
             docker build -t gaardsholt/$CIRCLE_PROJECT_REPONAME:latest .
-      - run:
-          name: docker-slim
-          command: |
-            curl -sL https://raw.githubusercontent.com/docker-slim/docker-slim/master/scripts/install-dockerslim.sh | sudo -E bash -
-            docker-slim build gaardsholt/$CIRCLE_PROJECT_REPONAME:latest --http-probe=false
+            docker images
   docker_login:
     steps:
       - run:
