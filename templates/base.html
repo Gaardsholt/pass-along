@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Pass-along</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="This service allows you to share your secrets, securely" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+
+<body>
+  <div id="root">
+    <div id="main">
+      <h1>Pass-along</h1>
+      {{template "content" .}}
+    </div>
+  </div>
+  <div id="share-url-container">
+    <h2>Copy link</h2>
+    <input id="share-url" class="input" readonly="readonly" type="text" value='' />
+  </div>
+  <div id="overlay" class="overlay"></div>
+
+  <script src="/js/main.js"></script>
+</body>
+
+</html>

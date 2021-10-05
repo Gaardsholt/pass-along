@@ -1,4 +1,4 @@
-module github.com/Gaardsholt/share-a-password
+module github.com/Gaardsholt/pass-along
 
 go 1.17
 

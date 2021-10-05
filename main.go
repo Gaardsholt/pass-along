@@ -5,33 +5,23 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"os"
 	"text/template"
 
-	"github.com/Gaardsholt/share-a-password/secret"
+	"github.com/Gaardsholt/pass-along/secret"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 )
 
 var secretStore secret.SecretStore
-var indexTemplate, notFoundTemplate *template.Template
+var templates map[string]*template.Template
 
 func init() {
 	secretStore = make(secret.SecretStore)
 
-	tmpl, err := template.ParseFiles("layout.html")
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to parse template file for 'index'")
-		os.Exit(1)
-	}
-	indexTemplate = tmpl
-
-	tmpl, err = template.ParseFiles("not-found.html")
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to parse template file for 'not-found'")
-		os.Exit(1)
-	}
-	notFoundTemplate = tmpl
+	templates = make(map[string]*template.Template)
+	templates["index"] = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
+	templates["not_found"] = template.Must(template.ParseFiles("templates/base.html", "templates/not-found.html"))
+	templates["read"] = template.Must(template.ParseFiles("templates/base.html", "templates/read.html"))
 }
 
 func main() {
@@ -44,13 +34,19 @@ func main() {
 	r.PathPrefix("/robots.txt").Handler(fs)
 	// End of static stuff
 
+	r.HandleFunc("/", IndexHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
-	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static/")))).Methods("GET")
 
 	port := 8080
 	log.Info().Msgf("Starting server at port %d", port)
 	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", port), r)).Msgf("Unable to start server at port %d", port)
+}
+
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	if err := templates["index"].Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func NewHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +56,8 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	log.Info().Msg("Creating a new secret")
 
 	myId, err := secretStore.Add(entry.Content, entry.ExpiresIn)
 	if err != nil {
@@ -82,14 +80,20 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	secretData, gotData := secretStore.Get(vars["id"])
 	if !gotData {
-		notFoundTemplate.Execute(w, nil)
+		if err := templates["not_found"].Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
+	log.Info().Msg("Fetching a secret")
+
 	if useHtml {
-		indexTemplate.Execute(w, Entry{
+		if err := templates["read"].Execute(w, Entry{
 			Content: secretData,
-		})
+		}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
