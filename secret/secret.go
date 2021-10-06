@@ -12,6 +12,9 @@ import (
 	"io"
 	"log"
 	"time"
+
+	"github.com/Gaardsholt/pass-along/config"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 type Secret struct {
@@ -36,6 +39,10 @@ func (s Secret) hash() string {
 	return hash
 }
 
+func deriveKey(passphrase string) []byte {
+	return pbkdf2.Key([]byte(passphrase), []byte(config.Config.ServerSalt), 1000, 32, sha512.New)
+}
+
 func (s Secret) encrypt(encryptionKey string) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -44,7 +51,7 @@ func (s Secret) encrypt(encryptionKey string) ([]byte, error) {
 		return nil, err
 	}
 
-	key := []byte(encryptionKey[0:32])
+	key := deriveKey(encryptionKey)
 
 	c, err := aes.NewCipher(key)
 	if err != nil {
@@ -66,7 +73,7 @@ func (s Secret) encrypt(encryptionKey string) ([]byte, error) {
 	return encryptedSecret, nil
 }
 func decrypt(ciphertext []byte, encryptionKey string) (*Secret, error) {
-	key := []byte(encryptionKey[0:32])
+	key := deriveKey(encryptionKey)
 
 	c, err := aes.NewCipher(key)
 	if err != nil {

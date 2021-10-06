@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Gaardsholt/pass-along/config"
 	"github.com/Gaardsholt/pass-along/secret"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
@@ -23,6 +24,8 @@ var templates map[string]*template.Template
 var startupTime time.Time
 
 func init() {
+	config.LoadConfig()
+
 	startupTime = time.Now()
 	secretStore = make(secret.SecretStore)
 
