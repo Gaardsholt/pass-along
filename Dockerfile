@@ -4,10 +4,13 @@ COPY . .
 RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /tmp/app
 
 FROM alpine
-COPY --from=builder /tmp/app /app
+RUN mkdir /app
+WORKDIR /app
+COPY --from=builder /tmp/app app
+ADD ./static static/
+ADD ./templates templates/
 
-RUN mkdir -p /config
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser /config
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser /app
 
 USER appuser
-CMD ["/app"]
+CMD ["/app/app"]
