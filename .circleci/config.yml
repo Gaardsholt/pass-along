@@ -73,4 +73,5 @@ workflows:
             branches:
               ignore: /.*/
           post-steps:
+              - docker_login
               - docker_push
