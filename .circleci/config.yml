@@ -30,7 +30,7 @@ commands:
             docker push gaardsholt/$CIRCLE_PROJECT_REPONAME --all-tags
 
 jobs:
-  test:
+  build:
     executor: go_image
     steps:
       - checkout
@@ -53,7 +53,24 @@ jobs:
 workflows:
   build:
     jobs:
-      - test:
+      - build:
           context: gaardsholt
+          filters:
+            tags:
+              ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build_docker:
           context: gaardsholt
+          filters:
+            tags:
+              ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+  publish:
+    jobs:
+      - build_docker:
+          context: gaardsholt
+          filters:
+            tags:
+              only: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+            branches:
+              ignore: /.*/
+          post-steps:
+              - docker_push
