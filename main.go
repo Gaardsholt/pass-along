@@ -6,16 +6,24 @@ import (
 	"mime"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/Gaardsholt/pass-along/secret"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 )
 
+type Page struct {
+	Content string    `json:"content"`
+	Startup time.Time `json:"startup"`
+}
+
 var secretStore secret.SecretStore
 var templates map[string]*template.Template
+var startupTime time.Time
 
 func init() {
+	startupTime = time.Now()
 	secretStore = make(secret.SecretStore)
 
 	templates = make(map[string]*template.Template)
@@ -44,7 +52,7 @@ func main() {
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	if err := templates["index"].Execute(w, nil); err != nil {
+	if err := templates["index"].Execute(w, Page{Startup: startupTime}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -80,7 +88,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	secretData, gotData := secretStore.Get(vars["id"])
 	if !gotData {
-		if err := templates["not_found"].Execute(w, nil); err != nil {
+		if err := templates["not_found"].Execute(w, Page{Startup: startupTime}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
@@ -89,8 +97,9 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info().Msg("Fetching a secret")
 
 	if useHtml {
-		if err := templates["read"].Execute(w, Entry{
+		if err := templates["read"].Execute(w, Page{
 			Content: secretData,
+			Startup: startupTime,
 		}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

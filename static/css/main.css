@@ -1,3 +1,9 @@
+:root {
+  --white: #fbfbfb;
+  --blue: #3498db;
+  --blackish: #3c3c3c;
+}
+
 @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
 
 html {
@@ -28,15 +34,18 @@ body {
   border-radius: 7px;
   justify-content: center;
 }
+#main p {
+  color: var(--white);
+}
 
 .input {
-  color: #3c3c3c;
+  color: var(--blackish);
   font-family: Helvetica, Arial, sans-serif;
   font-weight: 500;
   font-size: 18px;
   border-radius: 0;
   line-height: 22px;
-  background-color: #fbfbfb;
+  background-color: var(--white);
   padding: 13px 13px 13px 13px;
   margin-bottom: 10px;
   width: 100%;
@@ -46,7 +55,7 @@ body {
 
 .input:focus, #share-url.input  {
   box-shadow: 0;
-  border: 3px solid #3498db;
+  border: 3px solid var(--blue);
   outline: none;
 }
 
@@ -74,9 +83,9 @@ textarea {
 button.save {
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
   width: 100%;
-  border: #fbfbfb solid 4px;
-  background-color: #3498db;
-  color: white;
+  border: var(--white) solid 4px;
+  background-color: var(--blue);
+  color: var(--white);
   font-size: 24px;
   padding-top: 22px;
   padding-bottom: 22px;
@@ -92,12 +101,12 @@ button.save:not(button.save:disabled) {
 }
 
 button.save:hover:not(button.save:disabled) {
-  background-color: #fbfbfb;
-  color: #0493bd;
+  background-color: var(--white);
+  color: var(--blue);
 }
 
 button.save:disabled {
-  background-color: #3c3c3c;
+  background-color: var(--blackish);
 }
 
 .overlay {
@@ -127,7 +136,7 @@ button.save:disabled {
   width: 50%;
   max-width: 500px;
   min-width: 300px;
-  background-color: #fff;
+  background-color: var(--white);
   border-radius: 2px;
   transform: translateX(-50%) translateY(-50%);
   opacity: 0;
@@ -152,9 +161,15 @@ button.save:disabled {
 
 h1 {
   margin-top: 0;
-  color: white;
+  color: var(--white);
 }
 
 select {
-  color: #3c3c3c;
+  color: var(--blackish);
+}
+
+.startup {
+  position: absolute;
+  bottom: 0;
+  font-size: 12px;
 }
