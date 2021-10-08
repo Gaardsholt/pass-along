@@ -1,6 +1,11 @@
 {{define "content"}}
 <p>
-  <textarea name="xyz" class="input" id="secret-content" readonly onclick="clip(this);">{{.Content}}</textarea>
+  <textarea name="xyz" class="input" id="secret-content" style="display: none;" readonly></textarea>
+  <pre id="not-found" style="display:none;">The secret is no longer available.
+It has either already been read or it has expired.
+Or the link is just malformed.
+  </pre>
 </p>
 <p>Click here to create your own <a href="/">secret</a></p>
+<script src="/js/read.js"></script>
 {{end}}

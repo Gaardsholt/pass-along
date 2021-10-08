@@ -18,6 +18,10 @@ type Page struct {
 	Content string    `json:"content"`
 	Startup time.Time `json:"startup"`
 }
+type Entry struct {
+	Content   string `json:"content"`
+	ExpiresIn int    `json:"expires_in"`
+}
 
 var secretStore secret.SecretStore
 var templates map[string]*template.Template
@@ -31,7 +35,6 @@ func init() {
 
 	templates = make(map[string]*template.Template)
 	templates["index"] = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
-	templates["not_found"] = template.Must(template.ParseFiles("templates/base.html", "templates/not-found.html"))
 	templates["read"] = template.Must(template.ParseFiles("templates/base.html", "templates/read.html"))
 }
 
@@ -55,9 +58,7 @@ func main() {
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	if err := templates["index"].Execute(w, Page{Startup: startupTime}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	templates["index"].Execute(w, Page{Startup: startupTime})
 }
 
 func NewHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,14 +69,14 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Msg("Creating a new secret")
+	log.Debug().Msg("Creating a new secret")
 
 	myId, err := secretStore.Add(entry.Content, entry.ExpiresIn)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", myId)
 }
 
@@ -83,37 +84,29 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	useHtml := false
-	ctHdr := r.Header.Get("Content-Type")
-	contentType, _, err := mime.ParseMediaType(ctHdr)
+	ctHeader := r.Header.Get("Content-Type")
+	contentType, _, err := mime.ParseMediaType(ctHeader)
 	if err != nil || contentType != "application/json" {
 		useHtml = true
 	}
 
+	if useHtml {
+		newError := templates["read"].Execute(w, Page{Startup: startupTime})
+		if newError != nil {
+			fmt.Fprintf(w, "%s", newError)
+		}
+		return
+	}
+
 	secretData, gotData := secretStore.Get(vars["id"])
 	if !gotData {
-		if err := templates["not_found"].Execute(w, Page{Startup: startupTime}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		w.WriteHeader(http.StatusGone)
+		fmt.Fprint(w, "secret not found")
 		return
 	}
 
-	log.Info().Msg("Fetching a secret")
-
-	if useHtml {
-		if err := templates["read"].Execute(w, Page{
-			Content: secretData,
-			Startup: startupTime,
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
+	log.Debug().Msg("Fetching a secret")
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", secretData)
-}
-
-type Entry struct {
-	Content   string `json:"content"`
-	ExpiresIn int    `json:"expires_in"`
 }
