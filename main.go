@@ -10,18 +10,10 @@ import (
 
 	"github.com/Gaardsholt/pass-along/config"
 	"github.com/Gaardsholt/pass-along/secret"
+	. "github.com/Gaardsholt/pass-along/types"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 )
-
-type Page struct {
-	Content string    `json:"content"`
-	Startup time.Time `json:"startup"`
-}
-type Entry struct {
-	Content   string `json:"content"`
-	ExpiresIn int    `json:"expires_in"`
-}
 
 var secretStore secret.SecretStore
 var templates map[string]*template.Template
@@ -71,7 +63,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug().Msg("Creating a new secret")
 
-	myId, err := secretStore.Add(entry.Content, entry.ExpiresIn)
+	myId, err := secretStore.Add(entry)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

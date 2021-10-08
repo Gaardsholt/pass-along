@@ -14,13 +14,15 @@ import (
 	"time"
 
 	"github.com/Gaardsholt/pass-along/config"
+	. "github.com/Gaardsholt/pass-along/types"
 	"golang.org/x/crypto/pbkdf2"
 )
 
 type Secret struct {
-	Content   string    `json:"content"`
-	Expires   time.Time `json:"expires"`
-	TimeAdded time.Time `json:"time_added"`
+	Content        string    `json:"content"`
+	Expires        time.Time `json:"expires"`
+	TimeAdded      time.Time `json:"time_added"`
+	UnlimitedViews bool      `json:"unlimited_views"`
 }
 
 type SecretStore map[string][]byte
@@ -106,14 +108,15 @@ func decrypt(ciphertext []byte, encryptionKey string) (*Secret, error) {
 	return &p, nil
 }
 
-func (ss SecretStore) Add(content string, expiresIn int) (id string, err error) {
+func (ss SecretStore) Add(entry Entry) (id string, err error) {
 	expires := time.Now().Add(
 		time.Hour*time.Duration(0) +
 			time.Minute*time.Duration(0) +
-			time.Second*time.Duration(expiresIn),
+			time.Second*time.Duration(entry.ExpiresIn),
 	)
 
-	mySecret := new(content, expires)
+	mySecret := new(entry.Content, expires)
+	mySecret.UnlimitedViews = entry.UnlimitedViews
 	id = mySecret.hash()
 
 	baah, err := mySecret.encrypt(id)
@@ -132,13 +135,17 @@ func (ss SecretStore) Get(id string) (content string, gotData bool) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if s.Expires.After(time.Now().UTC()) {
+
+		isExpired := s.Expires.UTC().After(time.Now().UTC())
+		if isExpired {
 			content = s.Content
 		} else {
 			gotData = false
 		}
 
-		delete(ss, id)
+		if !isExpired || !s.UnlimitedViews {
+			delete(ss, id)
+		}
 	}
 
 	return content, gotData
