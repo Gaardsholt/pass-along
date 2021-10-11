@@ -7,6 +7,7 @@
 * Add some server config
 * Security review?
 * Add a go routine that checks if a secret has expire and then deletes it.
+* Add metrics
 
 ## Create a new secret
 
