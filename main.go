@@ -42,6 +42,7 @@ func main() {
 
 	r.HandleFunc("/", IndexHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
+	r.HandleFunc("/metrics", MetricsHandler).Methods("GET")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
 
 	port := 8080
@@ -105,4 +106,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", secretData)
+}
+
+func MetricsHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintf(w, "%d", len(secretStore))
 }
