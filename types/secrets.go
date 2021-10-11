@@ -1,4 +1,4 @@
-package secret
+package types
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/Gaardsholt/pass-along/config"
-	. "github.com/Gaardsholt/pass-along/types"
+	"github.com/Gaardsholt/pass-along/metrics"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -24,8 +24,6 @@ type Secret struct {
 	TimeAdded      time.Time `json:"time_added"`
 	UnlimitedViews bool      `json:"unlimited_views"`
 }
-
-type SecretStore map[string][]byte
 
 func new(content string, expires time.Time) Secret {
 	return Secret{
@@ -121,11 +119,13 @@ func (ss SecretStore) Add(entry Entry) (id string, err error) {
 
 	baah, err := mySecret.encrypt(id)
 	if err != nil {
+		metrics.SecretsCreatedWithError.Inc()
 		return
 	}
 
 	ss[id] = baah
 
+	metrics.SecretsCreated.Inc()
 	return
 }
 func (ss SecretStore) Get(id string) (content string, gotData bool) {
@@ -136,17 +136,25 @@ func (ss SecretStore) Get(id string) (content string, gotData bool) {
 			log.Fatal(err)
 		}
 
-		isExpired := s.Expires.UTC().After(time.Now().UTC())
-		if isExpired {
+		isNotExpired := s.Expires.UTC().After(time.Now().UTC())
+		if isNotExpired {
 			content = s.Content
+			metrics.SecretsRead.Inc()
 		} else {
 			gotData = false
+			metrics.ExpiredSecretsRead.Inc()
 		}
 
-		if !isExpired || !s.UnlimitedViews {
-			delete(ss, id)
+		if !isNotExpired || !s.UnlimitedViews {
+			ss.Delete(id)
 		}
+		return
 	}
+	metrics.NonExistentSecretsRead.Inc()
 
-	return content, gotData
+	return
+}
+func (ss SecretStore) Delete(id string) {
+	delete(ss, id)
+	metrics.SecretsDeleted.Inc()
 }

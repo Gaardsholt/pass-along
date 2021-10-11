@@ -9,25 +9,37 @@ import (
 	"time"
 
 	"github.com/Gaardsholt/pass-along/config"
-	"github.com/Gaardsholt/pass-along/secret"
+	"github.com/Gaardsholt/pass-along/metrics"
 	. "github.com/Gaardsholt/pass-along/types"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
-var secretStore secret.SecretStore
+var secretStore SecretStore
 var templates map[string]*template.Template
 var startupTime time.Time
+var pr *prometheus.Registry
 
 func init() {
 	config.LoadConfig()
 
 	startupTime = time.Now()
-	secretStore = make(secret.SecretStore)
+	secretStore = make(SecretStore)
 
 	templates = make(map[string]*template.Template)
 	templates["index"] = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
 	templates["read"] = template.Must(template.ParseFiles("templates/base.html", "templates/read.html"))
+
+	pr = prometheus.NewRegistry()
+	pr.MustRegister(NewSecretsInCache(&secretStore))
+	pr.MustRegister(metrics.SecretsRead)
+	pr.MustRegister(metrics.ExpiredSecretsRead)
+	pr.MustRegister(metrics.NonExistentSecretsRead)
+	pr.MustRegister(metrics.SecretsCreated)
+	pr.MustRegister(metrics.SecretsCreatedWithError)
+	pr.MustRegister(metrics.SecretsDeleted)
 }
 
 func main() {
@@ -42,7 +54,8 @@ func main() {
 
 	r.HandleFunc("/", IndexHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
-	r.HandleFunc("/metrics", MetricsHandler).Methods("GET")
+	r.Handle("/metrics", promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
+	// r.HandleFunc("/metrics", promhttp.Handler()).Methods("GET")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
 
 	port := 8080
