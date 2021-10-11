@@ -83,6 +83,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if useHtml {
+		_, hasData := secretStore[vars["id"]]
+		if !hasData {
+			w.WriteHeader(http.StatusGone)
+		}
 		newError := templates["read"].Execute(w, Page{Startup: startupTime})
 		if newError != nil {
 			fmt.Fprintf(w, "%s", newError)
