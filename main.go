@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"sync"
 	"text/template"
 	"time"
 
@@ -22,11 +23,16 @@ var templates map[string]*template.Template
 var startupTime time.Time
 var pr *prometheus.Registry
 
+var lock = sync.RWMutex{}
+
 func init() {
 	config.LoadConfig()
 
 	startupTime = time.Now()
-	secretStore = make(SecretStore)
+	secretStore = SecretStore{
+		Data: make(map[string][]byte),
+		Lock: &lock,
+	}
 
 	templates = make(map[string]*template.Template)
 	templates["index"] = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
@@ -44,7 +50,8 @@ func init() {
 
 func secretCleaner() {
 	for {
-		for k, v := range secretStore {
+		secretStore.Lock.RLock()
+		for k, v := range secretStore.Data {
 			s, err := Decrypt(v, k)
 			if err != nil {
 				continue
@@ -55,8 +62,8 @@ func secretCleaner() {
 				log.Debug().Msg("Found expired secret, deleting...")
 				secretStore.Delete(k)
 			}
-
 		}
+		secretStore.Lock.RUnlock()
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -119,7 +126,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if useHtml {
-		_, hasData := secretStore[vars["id"]]
+		_, hasData := secretStore.Data[vars["id"]]
 		if !hasData {
 			w.WriteHeader(http.StatusGone)
 		}
@@ -146,5 +153,5 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
-	fmt.Fprintf(w, "%d", len(secretStore))
+	fmt.Fprintf(w, "%d", len(secretStore.Data))
 }
