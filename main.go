@@ -50,6 +50,7 @@ func init() {
 
 func secretCleaner() {
 	for {
+		time.Sleep(5 * time.Minute)
 		secretStore.Lock.RLock()
 		for k, v := range secretStore.Data {
 			s, err := Decrypt(v, k)
@@ -64,7 +65,6 @@ func secretCleaner() {
 			}
 		}
 		secretStore.Lock.RUnlock()
-		time.Sleep(5 * time.Minute)
 	}
 }
 
@@ -78,12 +78,13 @@ func main() {
 	fs := http.FileServer(http.Dir("./static"))
 	r.PathPrefix("/js/").Handler(fs)
 	r.PathPrefix("/css/").Handler(fs)
+	r.PathPrefix("/favicon.ico").Handler(fs)
 	r.PathPrefix("/robots.txt").Handler(fs)
 	// End of static stuff
 
 	r.HandleFunc("/", IndexHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
-	r.Handle("/metrics", promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
+	r.PathPrefix("/metrics").Handler(promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
 	// r.HandleFunc("/metrics", promhttp.Handler()).Methods("GET")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
 
@@ -126,10 +127,6 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if useHtml {
-		_, hasData := secretStore.Data[vars["id"]]
-		if !hasData {
-			w.WriteHeader(http.StatusGone)
-		}
 		newError := templates["read"].Execute(w, Page{Startup: startupTime})
 		if newError != nil {
 			fmt.Fprintf(w, "%s", newError)
@@ -148,10 +145,4 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", secretData)
-}
-
-func MetricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-
-	fmt.Fprintf(w, "%d", len(secretStore.Data))
 }
