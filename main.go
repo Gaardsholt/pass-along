@@ -64,7 +64,7 @@ func secretCleaner() {
 			}
 		}
 		secretStore.Lock.RUnlock()
-		time.Sleep(5 * time.Second)
+		time.Sleep(5 * time.Minute)
 	}
 }
 
