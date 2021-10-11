@@ -1,6 +1,7 @@
 package types
 
 import (
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,7 +17,10 @@ type Entry struct {
 	UnlimitedViews bool   `json:"unlimited_views"`
 }
 
-type SecretStore map[string][]byte
+type SecretStore struct {
+	Data map[string][]byte
+	Lock *sync.RWMutex
+}
 
 // Prometheus stuff
 type SecretsInCache struct {
@@ -29,7 +33,7 @@ func (c *SecretsInCache) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SecretsInCache) Collect(ch chan<- prometheus.Metric) {
-	value := float64(len(*c.ss)) // Your code to fetch the counter value goes here.
+	value := float64(len(c.ss.Data)) // Your code to fetch the counter value goes here.
 	ch <- prometheus.MustNewConstMetric(
 		c.counterDesc,
 		prometheus.CounterValue,

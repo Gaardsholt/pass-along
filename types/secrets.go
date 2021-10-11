@@ -123,13 +123,17 @@ func (ss SecretStore) Add(entry Entry) (id string, err error) {
 		return
 	}
 
-	ss[id] = baah
+	ss.Lock.Lock()
+	defer ss.Lock.Unlock()
+	ss.Data[id] = baah
 
 	metrics.SecretsCreated.Inc()
 	return
 }
 func (ss SecretStore) Get(id string) (content string, gotData bool) {
-	value, gotData := ss[id]
+	ss.Lock.RLock()
+	value, gotData := ss.Data[id]
+	ss.Lock.RUnlock()
 	if gotData {
 		s, err := Decrypt(value, id)
 		if err != nil {
@@ -155,6 +159,9 @@ func (ss SecretStore) Get(id string) (content string, gotData bool) {
 	return
 }
 func (ss SecretStore) Delete(id string) {
-	delete(ss, id)
+	ss.Lock.Lock()
+	defer ss.Lock.Unlock()
+
+	delete(ss.Data, id)
 	metrics.SecretsDeleted.Inc()
 }
