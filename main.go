@@ -42,7 +42,29 @@ func init() {
 	pr.MustRegister(metrics.SecretsDeleted)
 }
 
+func secretCleaner() {
+	for {
+		for k, v := range secretStore {
+			s, err := Decrypt(v, k)
+			if err != nil {
+				continue
+			}
+
+			isNotExpired := s.Expires.UTC().After(time.Now().UTC())
+			if !isNotExpired {
+				log.Debug().Msg("Found expired secret, deleting...")
+				secretStore.Delete(k)
+			}
+
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func main() {
+
+	// Start loop that checks for expired secrets and deletes them
+	go secretCleaner()
 
 	r := mux.NewRouter()
 	// Start of static stuff

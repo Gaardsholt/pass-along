@@ -72,7 +72,7 @@ func (s Secret) encrypt(encryptionKey string) ([]byte, error) {
 
 	return encryptedSecret, nil
 }
-func decrypt(ciphertext []byte, encryptionKey string) (*Secret, error) {
+func Decrypt(ciphertext []byte, encryptionKey string) (*Secret, error) {
 	key := deriveKey(encryptionKey)
 
 	c, err := aes.NewCipher(key)
@@ -131,7 +131,7 @@ func (ss SecretStore) Add(entry Entry) (id string, err error) {
 func (ss SecretStore) Get(id string) (content string, gotData bool) {
 	value, gotData := ss[id]
 	if gotData {
-		s, err := decrypt(value, id)
+		s, err := Decrypt(value, id)
 		if err != nil {
 			log.Fatal(err)
 		}

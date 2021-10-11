@@ -6,7 +6,6 @@
 ## TODO:
 * Add some server config
 * Security review?
-* Add a go routine that checks if a secret has expire and then deletes it.
 
 ## Create a new secret
 
