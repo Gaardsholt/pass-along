@@ -50,7 +50,7 @@ func init() {
 
 func secretCleaner() {
 	for {
-		time.Sleep(5 * time.Minute)
+		time.Sleep(5 * time.Second)
 		secretStore.Lock.RLock()
 		for k, v := range secretStore.Data {
 			s, err := Decrypt(v, k)
@@ -61,7 +61,9 @@ func secretCleaner() {
 			isNotExpired := s.Expires.UTC().After(time.Now().UTC())
 			if !isNotExpired {
 				log.Debug().Msg("Found expired secret, deleting...")
+				secretStore.Lock.RUnlock()
 				secretStore.Delete(k)
+				secretStore.Lock.RLock()
 			}
 		}
 		secretStore.Lock.RUnlock()
