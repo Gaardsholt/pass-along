@@ -54,7 +54,7 @@ func init() {
 
 func secretCleaner() {
 	for {
-		time.Sleep(5 * time.Second)
+		time.Sleep(5 * time.Minute)
 		secretStore.Lock.RLock()
 		for k, v := range secretStore.Data {
 			s, err := Decrypt(v, k)
