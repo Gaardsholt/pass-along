@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"mime"
 	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"text/template"
 	"time"
 
@@ -72,6 +76,9 @@ func secretCleaner() {
 
 func main() {
 
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
 	// Start loop that checks for expired secrets and deletes them
 	go secretCleaner()
 
@@ -86,13 +93,32 @@ func main() {
 
 	r.HandleFunc("/", IndexHandler).Methods("GET")
 	r.HandleFunc("/", NewHandler).Methods("POST")
+	r.HandleFunc("/healthz", healthz)
 	r.PathPrefix("/metrics").Handler(promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
 	// r.HandleFunc("/metrics", promhttp.Handler()).Methods("GET")
 	r.HandleFunc("/{id}", GetHandler).Methods("GET")
 
 	port := 8080
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: r,
+	}
+	go func() {
+		log.Fatal().Err(srv.ListenAndServe()).Msgf("Unable to run the server at port %d", port)
+	}()
 	log.Info().Msgf("Starting server at port %d", port)
-	log.Fatal().Err(http.ListenAndServe(fmt.Sprintf(":%d", port), r)).Msgf("Unable to start server at port %d", port)
+
+	killSignal := <-interrupt
+	switch killSignal {
+	case os.Interrupt:
+		log.Info().Msg("Got SIGINT...")
+	case syscall.SIGTERM:
+		log.Info().Msg("Got SIGTERM...")
+	}
+
+	log.Info().Msg("The service is shutting down...")
+	srv.Shutdown(context.Background())
+	log.Info().Msg("Done")
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +173,9 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", secretData)
+}
+
+// healthz is a liveness probe.
+func healthz(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
