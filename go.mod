@@ -3,6 +3,7 @@ module github.com/Gaardsholt/pass-along
 go 1.17
 
 require (
+	github.com/gomodule/redigo v1.8.5
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.11.0
