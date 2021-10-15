@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Gaardsholt/pass-along/config"
-	"github.com/Gaardsholt/pass-along/interface_play"
+	"github.com/Gaardsholt/pass-along/datastore"
 	"github.com/Gaardsholt/pass-along/memory"
 	"github.com/Gaardsholt/pass-along/metrics"
 	"github.com/Gaardsholt/pass-along/redis"
@@ -26,7 +26,7 @@ const (
 )
 
 var pr *prometheus.Registry
-var secretStore interface_play.SecretStore
+var secretStore datastore.SecretStore
 var startupTime time.Time
 var templates map[string]*template.Template
 var lock = sync.RWMutex{}
@@ -41,12 +41,9 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	switch databaseType {
 	case "in-memory":
-		secretStore = memory.SecretStore{
-			Data: make(map[string][]byte),
-			Lock: &lock,
-		}
+		secretStore = memory.NewStore(&lock)
 	case "redis":
-		secretStore = redis.New(&lock)
+		secretStore = redis.NewStore(&lock)
 	}
 
 	registerPrometheusMetrics()
@@ -95,8 +92,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	}()
 	log.Info().Msgf("Starting server at port %d", externalPort)
 
-	// Start loop that checks for expired secrets and deletes them
-	// go secretCleaner()
+	go secretStore.DeleteExpiredSecrets()
 
 	return
 }

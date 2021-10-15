@@ -1,13 +1,11 @@
 package memory
 
 import (
-	"bytes"
-	"encoding/gob"
-	"log"
 	"sync"
 	"time"
 
-	"github.com/Gaardsholt/pass-along/crypto"
+	"github.com/rs/zerolog/log"
+
 	"github.com/Gaardsholt/pass-along/metrics"
 	"github.com/Gaardsholt/pass-along/types"
 )
@@ -17,28 +15,19 @@ type SecretStore struct {
 	Lock *sync.RWMutex
 }
 
+func NewStore(lock *sync.RWMutex) SecretStore {
+	return SecretStore{
+		Data: make(map[string][]byte),
+		Lock: lock,
+	}
+}
+
 func new(content string, expires time.Time) types.Secret {
 	return types.Secret{
 		Content:   content,
 		Expires:   expires,
 		TimeAdded: time.Now(),
 	}
-}
-
-func Decrypt(encryptedData []byte, encryptionKey string) (*types.Secret, error) {
-	decryptedData, err := crypto.Decrypt(encryptedData, encryptionKey)
-	if err != nil {
-		return nil, err
-	}
-
-	var secret types.Secret
-	dec := gob.NewDecoder(bytes.NewReader(decryptedData))
-	err = dec.Decode(&secret)
-	if err != nil {
-		return nil, err
-	}
-
-	return &secret, nil
 }
 
 func (ss SecretStore) Add(entry types.Entry) (id string, err error) {
@@ -70,9 +59,10 @@ func (ss SecretStore) Get(id string) (content string, gotData bool) {
 	value, gotData := ss.Data[id]
 	ss.Lock.RUnlock()
 	if gotData {
-		s, err := Decrypt(value, id)
+		s, err := types.Decrypt(value, id)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal().Err(err).Msg("Unable to decrypt secret")
+			return "", false
 		}
 
 		isNotExpired := s.Expires.UTC().After(time.Now().UTC())
@@ -99,4 +89,25 @@ func (ss SecretStore) Delete(id string) {
 
 	delete(ss.Data, id)
 	metrics.SecretsDeleted.Inc()
+}
+func (ss SecretStore) DeleteExpiredSecrets() {
+	for {
+		time.Sleep(5 * time.Minute)
+		ss.Lock.RLock()
+		for k, v := range ss.Data {
+			s, err := types.Decrypt(v, k)
+			if err != nil {
+				continue
+			}
+
+			isNotExpired := s.Expires.UTC().After(time.Now().UTC())
+			if !isNotExpired {
+				log.Debug().Msg("Found expired secret, deleting...")
+				ss.Lock.RUnlock()
+				ss.Delete(k)
+				ss.Lock.RLock()
+			}
+		}
+		ss.Lock.RUnlock()
+	}
 }

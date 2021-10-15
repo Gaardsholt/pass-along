@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -17,22 +16,20 @@ type SecretStore struct {
 	Lock *sync.RWMutex
 }
 
-func New(lock *sync.RWMutex) SecretStore {
+var pool *redis.Pool
 
-	// conn, err := redis.Dial("tcp", "localhost:6379")
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("cant freaking connect to redis")
-	// }
-	// defer conn.Close()
-	// _, err = conn.Do("HMSET", "id:2", "secret", "Very secret Value")
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("cant freaking connect to redis")
-	// }
-	// secret, err := redis.String(conn.Do("HGET", "id:2", "secret"))
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msg("cant freaking connect to redis")
-	// }
-	// fmt.Println(secret)
+func NewStore(lock *sync.RWMutex) SecretStore {
+	pool = &redis.Pool{
+		MaxIdle:   80,
+		MaxActive: 12000, // max number of connections
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", "localhost:6379")
+			if err != nil {
+				panic(err.Error())
+			}
+			return c, err
+		},
+	}
 
 	return SecretStore{
 		Data: make(map[string][]byte),
@@ -56,12 +53,15 @@ func (ss SecretStore) Add(entry types.Entry) (id string, err error) {
 		return
 	}
 
-	conn, err := redis.Dial("tcp", "localhost:6379")
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err = conn.Do("HMSET", id, "secret", baah)
 	if err != nil {
 		return "", err
 	}
-	defer conn.Close()
-	_, err = conn.Do("HMSET", id, "secret", baah)
+
+	_, err = conn.Do("EXPIRE", id, entry.ExpiresIn)
 	if err != nil {
 		return "", err
 	}
@@ -70,19 +70,33 @@ func (ss SecretStore) Add(entry types.Entry) (id string, err error) {
 }
 
 func (ss SecretStore) Get(id string) (content string, gotData bool) {
-	conn, err := redis.Dial("tcp", "localhost:6379")
-	if err != nil {
-		return "", false
-	}
+	conn := pool.Get()
 	defer conn.Close()
-	secret, err := redis.String(conn.Do("HGET", id, "secret"))
+
+	secret, err := redis.Bytes(conn.Do("HGET", id, "secret"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("cant freaking connect to redis")
 		return "", false
 	}
-	return secret, true
+
+	decryptedData, err := types.Decrypt(secret, id)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Unable to decrypt secret")
+		return "", false
+	}
+
+	ss.Delete(id)
+	return decryptedData.Content, true
 }
 
 func (ss SecretStore) Delete(id string) {
-	fmt.Println("Deleting...")
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("HDEL", id, "secret")
+	if err != nil {
+		log.Fatal().Err(err).Msgf("Failed to delete secret with id %s", id)
+	}
+}
+func (ss SecretStore) DeleteExpiredSecrets() {
+	log.Debug().Msg("Not doing anything as redis will automatically delete expired secrets")
 }
