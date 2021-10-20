@@ -53,10 +53,9 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	external := mux.NewRouter()
 	// Start of static stuff
 	fs := http.FileServer(http.Dir("./static"))
-	external.PathPrefix("/js/").Handler(fs)
-	external.PathPrefix("/css/").Handler(fs)
-	external.PathPrefix("/favicon.ico").Handler(fs)
+	external.PathPrefix("/assets").Handler(http.StripPrefix("/assets", fs))
 	external.PathPrefix("/robots.txt").Handler(fs)
+	external.PathPrefix("/favicon.ico").Handler(fs)
 	// End of static stuff
 
 	external.HandleFunc("/", IndexHandler).Methods("GET")
@@ -111,13 +110,31 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug().Msg("Creating a new secret")
 
-	myId, err := secretStore.Add(entry)
+	expires := time.Now().Add(
+		time.Hour*time.Duration(0) +
+			time.Minute*time.Duration(0) +
+			time.Second*time.Duration(entry.ExpiresIn),
+	)
+
+	mySecret := types.Secret{
+		Content:        entry.Content,
+		Expires:        expires,
+		TimeAdded:      time.Now(),
+		UnlimitedViews: entry.UnlimitedViews,
+	}
+	mySecret.UnlimitedViews = entry.UnlimitedViews
+	id := mySecret.GenerateID()
+
+	encryptedSecret, err := mySecret.Encrypt(id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		metrics.SecretsCreatedWithError.Inc()
 		return
 	}
+
+	_ = secretStore.Add(id, encryptedSecret, entry.ExpiresIn)
+
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "%s", myId)
+	fmt.Fprintf(w, "%s", id)
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
@@ -138,17 +155,41 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secretData, gotData := secretStore.Get(vars["id"])
+	id := vars["id"]
+	secretData, gotData := secretStore.Get(id)
 	if !gotData {
 		w.WriteHeader(http.StatusGone)
 		fmt.Fprint(w, "secret not found")
 		return
 	}
 
+	s, err := types.Decrypt(secretData, id)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Unable to decrypt secret")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	decryptedSecret := ""
+
+	isNotExpired := s.Expires.UTC().After(time.Now().UTC())
+	if isNotExpired {
+		decryptedSecret = s.Content
+		metrics.SecretsRead.Inc()
+	} else {
+		gotData = false
+		metrics.ExpiredSecretsRead.Inc()
+	}
+
+	if !isNotExpired || !s.UnlimitedViews {
+		secretStore.Delete(id)
+	}
+
 	log.Debug().Msg("Fetching a secret")
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", secretData)
+	fmt.Fprintf(w, "%s", decryptedSecret)
 }
 
 // healthz is a liveness probe.
