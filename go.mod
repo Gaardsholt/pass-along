@@ -27,5 +27,4 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	google.golang.org/protobuf v1.26.0-rc.1 // indirect
-	gotest.tools v2.2.0+incompatible // indirect
 )
