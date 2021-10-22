@@ -129,7 +129,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	encryptedSecret, err := mySecret.Encrypt(id)
 	if err != nil {
-		metrics.SecretsCreatedWithError.Inc()
+		go metrics.SecretsCreatedWithError.Inc()
 		return
 	}
 
@@ -184,10 +184,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	isNotExpired := s.Expires.UTC().After(time.Now().UTC())
 	if isNotExpired {
 		decryptedSecret = s.Content
-		metrics.SecretsRead.Inc()
+		go metrics.SecretsRead.Inc()
 	} else {
 		gotData = false
-		metrics.ExpiredSecretsRead.Inc()
+		go metrics.ExpiredSecretsRead.Inc()
 	}
 
 	if !isNotExpired || !s.UnlimitedViews {

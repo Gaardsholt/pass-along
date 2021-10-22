@@ -41,16 +41,16 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 
 	_, err := conn.Do("HMSET", id, "secret", secret)
 	if err != nil {
-		metrics.SecretsCreatedWithError.Inc()
+		go metrics.SecretsCreatedWithError.Inc()
 		return err
 	}
 
 	_, err = conn.Do("EXPIRE", id, expiresIn)
 	if err != nil {
-		metrics.SecretsCreatedWithError.Inc()
+		go metrics.SecretsCreatedWithError.Inc()
 		return err
 	}
-	metrics.SecretsCreated.Inc()
+	go metrics.SecretsCreated.Inc()
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 
 	secret, err := redis.Bytes(conn.Do("HGET", id, "secret"))
 	if err != nil {
-		metrics.NonExistentSecretsRead.Inc()
+		go metrics.NonExistentSecretsRead.Inc()
 		return nil, false
 	}
 	return secret, true
@@ -74,7 +74,7 @@ func (ss SecretStore) Delete(id string) {
 	if err != nil {
 		log.Fatal().Err(err).Msgf("Failed to delete secret with id %s", id)
 	}
-	metrics.SecretsDeleted.Inc()
+	go metrics.SecretsDeleted.Inc()
 }
 
 func (ss SecretStore) DeleteExpiredSecrets() {
