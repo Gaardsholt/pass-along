@@ -45,7 +45,7 @@ func GetTestRedisServer(t *testing.T) SecretStore {
 
 }
 
-// TestAddAsExpected tests if the config is loaded as expected
+// TestAddAsExpected tests adding and retrieving a secret in redis
 func TestAddAsExpected(t *testing.T) {
 	// arrange
 	secretStore := GetTestRedisServer(t)

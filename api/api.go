@@ -31,6 +31,7 @@ var startupTime time.Time
 var templates map[string]*template.Template
 var lock = sync.RWMutex{}
 
+// StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	startupTime = time.Now()
 
@@ -100,6 +101,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	templates["index"].Execute(w, types.Page{Startup: startupTime})
 }
 
+// NewHandler creates a new secret in the secretstore
 func NewHandler(w http.ResponseWriter, r *http.Request) {
 	var entry types.Entry
 	err := json.NewDecoder(r.Body).Decode(&entry)
@@ -131,12 +133,18 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = secretStore.Add(id, encryptedSecret, entry.ExpiresIn)
+	err = secretStore.Add(id, encryptedSecret, entry.ExpiresIn)
+	if err != nil {
+		http.Error(w, "failed to add secret, please try again", http.StatusInternalServerError)
+		log.Error().Err(err).Msg("Unable to add secret")
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", id)
 }
 
+// GetHandler retrieves a secret in the secret store
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
