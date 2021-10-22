@@ -77,3 +77,18 @@ func TestAddAsExpected(t *testing.T) {
 	// assert
 	assert.Equal(t, string(content), byteArray.String())
 }
+
+// TestGetWithFailure tests getting a non existing secret in redis
+func TestGetWithFailure(t *testing.T) {
+	// arrange
+	secretStore := GetTestRedisServer(t)
+
+	// act
+	_, gotData := secretStore.Get("someid")
+	if gotData == true {
+		t.Error("data recieved from redis, while none was expected")
+	}
+
+	// assert
+	assert.Equal(t, false, gotData)
+}
