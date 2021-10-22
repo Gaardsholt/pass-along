@@ -22,67 +22,22 @@ func NewStore(lock *sync.RWMutex) SecretStore {
 	}
 }
 
-func new(content string, expires time.Time) types.Secret {
-	return types.Secret{
-		Content:   content,
-		Expires:   expires,
-		TimeAdded: time.Now(),
-	}
-}
-
-func (ss SecretStore) Add(entry types.Entry) (id string, err error) {
-	expires := time.Now().Add(
-		time.Hour*time.Duration(0) +
-			time.Minute*time.Duration(0) +
-			time.Second*time.Duration(entry.ExpiresIn),
-	)
-
-	mySecret := new(entry.Content, expires)
-	mySecret.UnlimitedViews = entry.UnlimitedViews
-	id = mySecret.GenerateID()
-
-	baah, err := mySecret.Encrypt(id)
-	if err != nil {
-		metrics.SecretsCreatedWithError.Inc()
-		return
-	}
-
+func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 	ss.Lock.Lock()
 	defer ss.Lock.Unlock()
-	ss.Data[id] = baah
+	ss.Data[id] = secret
 
 	metrics.SecretsCreated.Inc()
-	return
+	return nil
 }
-func (ss SecretStore) Get(id string) (content string, gotData bool) {
+
+func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 	ss.Lock.RLock()
-	value, gotData := ss.Data[id]
+	secret, gotData = ss.Data[id]
 	ss.Lock.RUnlock()
-	if gotData {
-		s, err := types.Decrypt(value, id)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Unable to decrypt secret")
-			return "", false
-		}
-
-		isNotExpired := s.Expires.UTC().After(time.Now().UTC())
-		if isNotExpired {
-			content = s.Content
-			metrics.SecretsRead.Inc()
-		} else {
-			gotData = false
-			metrics.ExpiredSecretsRead.Inc()
-		}
-
-		if !isNotExpired || !s.UnlimitedViews {
-			ss.Delete(id)
-		}
-		return
-	}
-	metrics.NonExistentSecretsRead.Inc()
-
 	return
 }
+
 func (ss SecretStore) Delete(id string) {
 	ss.Lock.Lock()
 	defer ss.Lock.Unlock()
@@ -90,6 +45,7 @@ func (ss SecretStore) Delete(id string) {
 	delete(ss.Data, id)
 	metrics.SecretsDeleted.Inc()
 }
+
 func (ss SecretStore) DeleteExpiredSecrets() {
 	for {
 		time.Sleep(5 * time.Minute)

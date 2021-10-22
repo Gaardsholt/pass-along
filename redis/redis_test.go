@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"bytes"
+	"encoding/gob"
 	"sync"
 	"testing"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/Gaardsholt/pass-along/types"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gomodule/redigo/redis"
+	"github.com/rs/zerolog/log"
 	"gotest.tools/assert"
 )
 
@@ -52,8 +55,16 @@ func TestAddAsExpected(t *testing.T) {
 		UnlimitedViews: false,
 	}
 
+	var byteArray bytes.Buffer
+	err := gob.NewEncoder(&byteArray).Encode(entry)
+	if err != nil {
+		log.Fatal().Err(err).Msg("encode error")
+	}
+
+	id := "1"
+
 	// act
-	id, err := secretStore.Add(entry)
+	err = secretStore.Add(id, byteArray.Bytes(), entry.ExpiresIn)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,5 +75,5 @@ func TestAddAsExpected(t *testing.T) {
 	}
 
 	// assert
-	assert.Equal(t, content, entry.Content)
+	assert.Equal(t, string(content), byteArray.String())
 }
