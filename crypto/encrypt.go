@@ -1,22 +1,14 @@
 package crypto
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/gob"
 	"io"
 )
 
 func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, err error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err = enc.Encode(data)
-	if err != nil {
-		return nil, err
-	}
-
+	byteArray := data.([]byte)
 	key := deriveKey(encryptionKey)
 
 	c, err := aes.NewCipher(key)
@@ -34,6 +26,6 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 		return nil, err
 	}
 
-	encryptedSecret = gcm.Seal(nonce, nonce, buf.Bytes(), nil)
+	encryptedSecret = gcm.Seal(nonce, nonce, byteArray, nil)
 	return
 }
