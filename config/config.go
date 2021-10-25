@@ -10,6 +10,8 @@ import (
 type GlobalConfig struct {
 	ServerSalt   string  `required:"false"`
 	DatabaseType *string `required:"false" default:"in-memory"`
+	RedisServer  *string `required:"false"`
+	RedisPort    *int    `required:"false"`
 }
 
 var Config GlobalConfig
@@ -31,4 +33,18 @@ func (c GlobalConfig) GetDatabaseType() (string, error) {
 	default:
 		return "", fmt.Errorf("unknown database type")
 	}
+}
+
+func (c GlobalConfig) GetRedisServer() string {
+	if c.RedisServer != nil {
+		return *c.RedisServer
+	}
+	return "localhost"
+}
+
+func (c GlobalConfig) GetRedisPort() int {
+	if c.RedisPort != nil {
+		return *c.RedisPort
+	}
+	return 6379
 }

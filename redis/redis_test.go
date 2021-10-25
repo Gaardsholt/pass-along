@@ -3,10 +3,8 @@ package redis
 import (
 	"bytes"
 	"encoding/gob"
-	"sync"
 	"testing"
 
-	"github.com/Gaardsholt/pass-along/datastore"
 	"github.com/Gaardsholt/pass-along/types"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/gomodule/redigo/redis"
@@ -14,8 +12,7 @@ import (
 	"gotest.tools/assert"
 )
 
-var secretStore datastore.SecretStore
-var lock = sync.RWMutex{}
+var secretStore SecretStore
 
 // GetTestRedisServer creates the test server
 func GetTestRedisServer(t *testing.T) SecretStore {
@@ -40,7 +37,6 @@ func GetTestRedisServer(t *testing.T) SecretStore {
 
 	return SecretStore{
 		Data: make(map[string][]byte),
-		Lock: &lock,
 	}
 
 }
