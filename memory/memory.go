@@ -15,11 +15,11 @@ type SecretStore struct {
 	Lock *sync.RWMutex
 }
 
-func NewStore(lock *sync.RWMutex) SecretStore {
+func New(lock *sync.RWMutex) (SecretStore, error) {
 	return SecretStore{
 		Data: make(map[string][]byte),
 		Lock: lock,
-	}
+	}, nil
 }
 
 func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {

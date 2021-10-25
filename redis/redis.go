@@ -1,12 +1,13 @@
 package redis
 
 import (
+	"fmt"
 	"sync"
 
+	"github.com/Gaardsholt/pass-along/config"
 	"github.com/Gaardsholt/pass-along/metrics"
-	"github.com/rs/zerolog/log"
-
 	"github.com/gomodule/redigo/redis"
+	"github.com/rs/zerolog/log"
 )
 
 type SecretStore struct {
@@ -16,12 +17,16 @@ type SecretStore struct {
 
 var pool *redis.Pool
 
-func NewStore(lock *sync.RWMutex) SecretStore {
+func New() (ss SecretStore, err error) {
+
+	server := config.Config.GetRedisServer()
+	port := config.Config.GetRedisPort()
+
 	pool = &redis.Pool{
 		MaxIdle:   80,
 		MaxActive: 12000, // max number of connections
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", "localhost:6379")
+			c, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
 			if err != nil {
 				panic(err.Error())
 			}
@@ -29,10 +34,22 @@ func NewStore(lock *sync.RWMutex) SecretStore {
 		},
 	}
 
-	return SecretStore{
+	defer func() {
+		// recover from panic if one occured. Set err to nil otherwise.
+		r := recover()
+		if r != nil {
+			err = fmt.Errorf("%s", r)
+		}
+	}()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	ss = SecretStore{
 		Data: make(map[string][]byte),
-		Lock: lock,
 	}
+
+	return ss, nil
 }
 
 func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {

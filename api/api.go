@@ -42,9 +42,13 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	switch databaseType {
 	case "in-memory":
-		secretStore = memory.NewStore(&lock)
+		secretStore, err = memory.New(&lock)
 	case "redis":
-		secretStore = redis.NewStore(&lock)
+		secretStore, err = redis.New()
+	}
+
+	if err != nil {
+		log.Fatal().Err(err).Msgf("%s", err)
 	}
 
 	registerPrometheusMetrics()
@@ -90,7 +94,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
-	log.Info().Msgf("Starting server at port %d", externalPort)
+	log.Info().Msgf("Starting server at port %d with %s as datastore", externalPort, databaseType)
 
 	go secretStore.DeleteExpiredSecrets()
 
