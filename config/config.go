@@ -7,6 +7,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+// GlobalConfig holds config parameters
 type GlobalConfig struct {
 	ServerSalt   string  `required:"false"`
 	DatabaseType *string `required:"false" default:"in-memory"`
@@ -24,6 +25,7 @@ func LoadConfig() {
 	}
 }
 
+// GetDatabaseType determines if a correct db is set
 func (c GlobalConfig) GetDatabaseType() (string, error) {
 	switch *c.DatabaseType {
 	case "in-memory":

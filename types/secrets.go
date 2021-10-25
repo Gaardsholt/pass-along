@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/Gaardsholt/pass-along/crypto"
@@ -27,7 +28,8 @@ func NewSecret(content string, expires time.Time) Secret {
 }
 
 func (s Secret) GenerateID() string {
-	checksum := sha512.Sum512([]byte(fmt.Sprintf("%v", s)))
+	random := randomString(30)
+	checksum := sha512.Sum512([]byte(fmt.Sprintf("%v%v", s, random)))
 	hash := base64.RawURLEncoding.EncodeToString(checksum[:])
 	return hash
 }
@@ -50,4 +52,11 @@ func Decrypt(encryptedData []byte, encryptionKey string) (*Secret, error) {
 	}
 
 	return &secret, nil
+}
+
+func randomString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, length)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)[:length]
 }

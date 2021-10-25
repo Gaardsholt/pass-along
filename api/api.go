@@ -31,6 +31,7 @@ var startupTime time.Time
 var templates map[string]*template.Template
 var lock = sync.RWMutex{}
 
+// StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	startupTime = time.Now()
 
@@ -104,6 +105,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	templates["index"].Execute(w, types.Page{Startup: startupTime})
 }
 
+// NewHandler creates a new secret in the secretstore
 func NewHandler(w http.ResponseWriter, r *http.Request) {
 	var entry types.Entry
 	err := json.NewDecoder(r.Body).Decode(&entry)
@@ -131,12 +133,14 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	encryptedSecret, err := mySecret.Encrypt(id)
 	if err != nil {
-		metrics.SecretsCreatedWithError.Inc()
+		go metrics.SecretsCreatedWithError.Inc()
 		return
 	}
 
 	err = secretStore.Add(id, encryptedSecret, entry.ExpiresIn)
 	if err != nil {
+		http.Error(w, "failed to add secret, please try again", http.StatusInternalServerError)
+		log.Error().Err(err).Msg("Unable to add secret")
 		return
 	}
 
@@ -144,6 +148,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", id)
 }
 
+// GetHandler retrieves a secret in the secret store
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -183,10 +188,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	isNotExpired := s.Expires.UTC().After(time.Now().UTC())
 	if isNotExpired {
 		decryptedSecret = s.Content
-		metrics.SecretsRead.Inc()
+		go metrics.SecretsRead.Inc()
 	} else {
 		gotData = false
-		metrics.ExpiredSecretsRead.Inc()
+		go metrics.ExpiredSecretsRead.Inc()
 	}
 
 	if !isNotExpired || !s.UnlimitedViews {

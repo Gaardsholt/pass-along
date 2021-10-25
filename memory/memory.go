@@ -27,7 +27,7 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 	defer ss.Lock.Unlock()
 	ss.Data[id] = secret
 
-	metrics.SecretsCreated.Inc()
+	go metrics.SecretsCreated.Inc()
 	return nil
 }
 
@@ -43,7 +43,7 @@ func (ss SecretStore) Delete(id string) {
 	defer ss.Lock.Unlock()
 
 	delete(ss.Data, id)
-	metrics.SecretsDeleted.Inc()
+	go metrics.SecretsDeleted.Inc()
 }
 
 func (ss SecretStore) DeleteExpiredSecrets() {
