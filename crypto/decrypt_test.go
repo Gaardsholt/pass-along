@@ -8,9 +8,15 @@ import (
 
 // TestDecryptAsExpected tests if a string is decrypted correct
 func TestDecryptAsExpected(t *testing.T) {
+
+	secretValue := "mysupersecretvalue"
+
 	// arrange
-	data := []byte("mysupersecretvalue")
-	encryptedResult, err := Encrypt(data, "encryptionkey")
+	byteArray, err := GetBytes(secretValue)
+	if err != nil {
+		t.Error("encode error")
+	}
+	encryptedResult, err := Encrypt(secretValue, "encryptionkey")
 	if err != nil {
 		t.Error("encryption failed")
 	}
@@ -20,9 +26,9 @@ func TestDecryptAsExpected(t *testing.T) {
 	if err != nil {
 		t.Error("decryption failed")
 	}
-	t.Log(string(data))
+	t.Log(string(byteArray))
 	t.Logf("%d", result)
 
 	// assert
-	assert.Equal(t, string(data), string(result))
+	assert.Equal(t, string(byteArray), string(result))
 }

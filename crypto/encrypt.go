@@ -8,7 +8,10 @@ import (
 )
 
 func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, err error) {
-	byteArray := data.([]byte)
+	byteArray, err := GetBytes(data)
+	if err != nil {
+		return nil, err
+	}
 	key := deriveKey(encryptionKey)
 
 	c, err := aes.NewCipher(key)
