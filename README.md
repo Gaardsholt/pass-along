@@ -3,11 +3,6 @@
 > :warning: Very much work in progress !
 
 
-## TODO:
-* Add some server config
-* Security review?
-
-
 The main application uses port `8080`.
 
  `/healthz` and `/metrics` endpoints uses port `8888`.
