@@ -7,6 +7,36 @@
 * Add some server config
 * Security review?
 
+
+The main application uses port `8080`.
+
+ `/healthz` and `/metrics` endpoints uses port `8888`.
+
+
+## Server config
+
+The following config can be set via environment variables
+| Tables                        | Required | Default   |
+| ----------------------------- | :------: | --------- |
+| [SERVERSALT](#SERVERSALT)     |          |           |
+| [DATABASETYPE](#DATABASETYPE) |          | in-memory |
+| [REDISSERVER](#REDISSERVER)   |          | localhost |
+| [REDISPORT](#REDISPORT)       |          | 6379      |
+
+
+### SERVERSALT
+For extra security you can add your own salt when encrypting the data.
+
+### DATABASETYPE
+Can either be `in-memory` or `redis`.
+
+### REDISSERVER
+Address to your redis server.
+
+### REDISPORT
+Used to specify the port your redis server is using.
+
+
 ## Create a new secret
 
 ```bash
