@@ -7,7 +7,7 @@ require (
 	github.com/gomodule/redigo v1.8.8
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/prometheus/client_golang v1.12.0
+	github.com/prometheus/client_golang v1.12.1
 	github.com/rs/zerolog v1.26.1
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
 	gotest.tools v2.2.0+incompatible
