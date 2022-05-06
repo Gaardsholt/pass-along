@@ -1,7 +1,7 @@
-FROM golang:1.17.1-alpine AS builder
+FROM golang:1.18-alpine AS builder
 WORKDIR $GOPATH/src/app
 COPY . .
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /tmp/app
+RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s" -o /tmp/app
 
 FROM alpine
 RUN mkdir /app
