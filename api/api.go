@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"mime"
 	"net/http"
 	"sync"
 	"time"
@@ -56,16 +55,17 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
+	external.HandleFunc("/api", NewHandler).Methods("POST")
+	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
 	// Start of static stuff
-	fs := http.FileServer(http.Dir("./static"))
-	external.PathPrefix("/assets").Handler(http.StripPrefix("/assets", fs))
-	external.PathPrefix("/robots.txt").Handler(fs)
-	external.PathPrefix("/favicon.ico").Handler(fs)
+	external.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
+	// fs := http.FileServer(http.Dir("./static"))
+	// external.PathPrefix("/assets").Handler(http.StripPrefix("/assets", fs))
+	// external.PathPrefix("/robots.txt").Handler(fs)
+	// external.PathPrefix("/favicon.ico").Handler(fs)
 	// End of static stuff
 
-	external.HandleFunc("/", IndexHandler).Methods("GET")
-	external.HandleFunc("/", NewHandler).Methods("POST")
-	external.HandleFunc("/{id}", GetHandler).Methods("GET")
+	// external.HandleFunc("/", IndexHandler).Methods("GET")
 
 	internal.HandleFunc("/healthz", healthz)
 	internal.Handle("/metrics", promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
@@ -151,21 +151,6 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 // GetHandler retrieves a secret in the secret store
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
-	useHtml := false
-	ctHeader := r.Header.Get("Content-Type")
-	contentType, _, err := mime.ParseMediaType(ctHeader)
-	if err != nil || contentType != "application/json" {
-		useHtml = true
-	}
-
-	if useHtml {
-		newError := templates["read"].Execute(w, types.Page{Startup: startupTime})
-		if newError != nil {
-			fmt.Fprintf(w, "%s", newError)
-		}
-		return
-	}
 
 	id := vars["id"]
 	secretData, gotData := secretStore.Get(id)

@@ -11,9 +11,9 @@
       "mode": "auto",
       "program": "${workspaceFolder}/main.go",
       "args": [],
-      "env": {
-        "DATABASETYPE": "redis"
-      }
+      // "env": {
+      //   "DATABASETYPE": "redis"
+      // }
     }
   ]
 }
