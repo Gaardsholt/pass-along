@@ -33,8 +33,7 @@ class SecretManager {
   displaySecret(id) {
     this.hideAll();
     this.readSecretContent.value = `Your super secret
-password will
-goes somewhere here`;
+password goes here`;
     this.readSecretContainer.style = "display: block";
 
     const that = this;
@@ -47,9 +46,7 @@ goes somewhere here`;
         }
         that.readSecretContent.value = response;
         that.revealSecretText.style = "display: none";
-        that.readSecretContent.style = 'filter: blur(0px)';
-        // window.secretManager.displaySecret();
-    
+        that.readSecretContent.classList.add('active');
       });
   
     }, false);

@@ -173,3 +173,12 @@ select {
   bottom: 0;
   font-size: 12px;
 }
+
+#read-secret-content {
+  filter: blur(3px);
+  transition: all 300ms ease-in-out;
+}
+
+#read-secret-content.active {
+  filter: blur(0px);
+}
