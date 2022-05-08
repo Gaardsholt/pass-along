@@ -8,9 +8,8 @@ RUN mkdir /app
 WORKDIR /app
 COPY --from=builder /tmp/app app
 ADD ./static static/
-ADD ./templates templates/
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser /app
-
 USER appuser
+
 CMD ["/app/app"]
