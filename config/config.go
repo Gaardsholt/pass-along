@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,6 +17,7 @@ type GlobalConfig struct {
 	DatabaseType *string `required:"false" split_words:"true" default:"in-memory"`
 	RedisServer  *string `required:"false" split_words:"true"`
 	RedisPort    *int    `required:"false" split_words:"true"`
+	LogLevel     string  `required:"false" split_words:"true"`
 }
 
 var Config GlobalConfig
@@ -29,6 +32,8 @@ func LoadConfig() {
 	if Config.GetServerPort() == Config.GetHealthPort() {
 		log.Fatal().Err(nil).Msg("SERVER_PORT and HEALTH_PORT must be different")
 	}
+
+	setupLogLevel()
 
 }
 
@@ -70,4 +75,24 @@ func (c GlobalConfig) GetHealthPort() int {
 		return *c.HealthPort
 	}
 	return 8888
+}
+
+func setupLogLevel() {
+	// default is info
+	switch strings.ToLower(Config.LogLevel) {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		break
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		break
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		break
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		break
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
 }

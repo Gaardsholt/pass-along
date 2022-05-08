@@ -83,7 +83,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
-	log.Info().Msgf("Starting server at port %d with %s as datastore", externalPort, databaseType)
+	log.Info().Msgf("Starting server with '%s' as datastore", databaseType)
 	log.Info().Msgf("Site can now be accessed at http://localhost:%d", externalPort)
 	log.Info().Msgf("Health and metrics and can be accessed on http://localhost:%d", internalPort)
 
