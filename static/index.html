@@ -34,7 +34,7 @@
       <h1>Pass-along</h1>
       <div id="create-secret" style="display:none;">
         <p>
-          <textarea name="xyz" class="input" id="secret-content" placeholder="Write all of your secrets here..."
+          <textarea name="xyz" class="input blurred" id="secret-content" placeholder="Write all of your secrets here..."
             autocomplete="nope" onchange="updateSaveButton(this);" onkeyup="updateSaveButton(this);"></textarea>
         </p>
         
@@ -51,7 +51,7 @@
       </div>
       <div id="read-secret" style="display:none;">
         <p style="position: relative;display: flex;justify-content: center;align-items: center;">
-          <textarea name="xyz" class="input" id="read-secret-content" autocomplete="nope" readonly></textarea>
+          <textarea name="xyz" class="input blurred" id="read-secret-content" autocomplete="nope" readonly></textarea>
           <span id="revealSecret" style="position: absolute;color: black;text-align: center;font-size: 1.5rem;justify-content: center;cursor: pointer;padding:1em;">Click here to reveal the secrets</span>
         </p>
         <p>Click here to create your own <a href="/">secret</a></p>
