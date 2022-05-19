@@ -3,8 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"mime"
 	"net/http"
 	"sync"
 	"time"
@@ -16,7 +14,6 @@ import (
 	"github.com/Gaardsholt/pass-along/redis"
 	"github.com/Gaardsholt/pass-along/types"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
@@ -25,10 +22,8 @@ const (
 	ErrServerShuttingDown = "http: Server closed"
 )
 
-var pr *prometheus.Registry
 var secretStore datastore.SecretStore
 var startupTime time.Time
-var templates map[string]*template.Template
 var lock = sync.RWMutex{}
 
 // StartServer starts the internal and external http server and initiates the secrets store
@@ -52,25 +47,19 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	}
 
 	registerPrometheusMetrics()
-	createTemplates()
 
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
-	// Start of static stuff
-	fs := http.FileServer(http.Dir("./static"))
-	external.PathPrefix("/assets").Handler(http.StripPrefix("/assets", fs))
-	external.PathPrefix("/robots.txt").Handler(fs)
-	external.PathPrefix("/favicon.ico").Handler(fs)
-	// End of static stuff
+	external.HandleFunc("/api", NewHandler).Methods("POST")
+	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
+	external.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
 
-	external.HandleFunc("/", IndexHandler).Methods("GET")
-	external.HandleFunc("/", NewHandler).Methods("POST")
-	external.HandleFunc("/{id}", GetHandler).Methods("GET")
+	// external.HandleFunc("/", IndexHandler).Methods("GET")
 
 	internal.HandleFunc("/healthz", healthz)
 	internal.Handle("/metrics", promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
 
-	internalPort := 8888
+	internalPort := config.Config.GetHealthPort()
 	internalServer = &http.Server{
 		Addr:    fmt.Sprintf(":%d", internalPort),
 		Handler: internal,
@@ -83,7 +72,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 		}
 	}()
 
-	externalPort := 8080
+	externalPort := config.Config.GetServerPort()
 	externalServer = &http.Server{
 		Addr:    fmt.Sprintf(":%d", externalPort),
 		Handler: external,
@@ -94,15 +83,13 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
-	log.Info().Msgf("Starting server at port %d with %s as datastore", externalPort, databaseType)
+	log.Info().Msgf("Starting server with '%s' as datastore", databaseType)
+	log.Info().Msgf("Site can now be accessed at http://localhost:%d", externalPort)
+	log.Info().Msgf("Health and metrics and can be accessed on http://localhost:%d", internalPort)
 
 	go secretStore.DeleteExpiredSecrets()
 
 	return
-}
-
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	templates["index"].Execute(w, types.Page{Startup: startupTime})
 }
 
 // NewHandler creates a new secret in the secretstore
@@ -152,21 +139,6 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	useHtml := false
-	ctHeader := r.Header.Get("Content-Type")
-	contentType, _, err := mime.ParseMediaType(ctHeader)
-	if err != nil || contentType != "application/json" {
-		useHtml = true
-	}
-
-	if useHtml {
-		newError := templates["read"].Execute(w, types.Page{Startup: startupTime})
-		if newError != nil {
-			fmt.Fprintf(w, "%s", newError)
-		}
-		return
-	}
-
 	id := vars["id"]
 	secretData, gotData := secretStore.Get(id)
 	if !gotData {
@@ -203,47 +175,3 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", decryptedSecret)
 }
-
-// healthz is a liveness probe.
-func healthz(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
-func registerPrometheusMetrics() {
-	pr = prometheus.NewRegistry()
-	// pr.MustRegister(types.NewSecretsInCache(&secretStore))
-	pr.MustRegister(metrics.SecretsRead)
-	pr.MustRegister(metrics.ExpiredSecretsRead)
-	pr.MustRegister(metrics.NonExistentSecretsRead)
-	pr.MustRegister(metrics.SecretsCreated)
-	pr.MustRegister(metrics.SecretsCreatedWithError)
-	pr.MustRegister(metrics.SecretsDeleted)
-}
-
-func createTemplates() {
-	templates = make(map[string]*template.Template)
-	templates["index"] = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
-	templates["read"] = template.Must(template.ParseFiles("templates/base.html", "templates/read.html"))
-}
-
-// func secretCleaner() {
-// 	for {
-// 		time.Sleep(5 * time.Minute)
-// 		secretStore.Lock.RLock()
-// 		for k, v := range secretStore.Data {
-// 			s, err := types.Decrypt(v, k)
-// 			if err != nil {
-// 				continue
-// 			}
-
-// 			isNotExpired := s.Expires.UTC().After(time.Now().UTC())
-// 			if !isNotExpired {
-// 				log.Debug().Msg("Found expired secret, deleting...")
-// 				secretStore.Lock.RUnlock()
-// 				secretStore.Delete(k)
-// 				secretStore.Lock.RLock()
-// 			}
-// 		}
-// 		secretStore.Lock.RUnlock()
-// 	}
-// }

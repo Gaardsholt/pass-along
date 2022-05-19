@@ -7,7 +7,7 @@
 @import url(https://fonts.googleapis.com/css?family=Montserrat:400,700);
 
 html {
-  background: url(http://thekitemap.com/images/feedback-img.jpg) no-repeat;
+  background: url(/background.jpg) no-repeat;
   background-size: cover;
   height: 100%;
 }
@@ -172,4 +172,13 @@ select {
   position: absolute;
   bottom: 0;
   font-size: 12px;
+}
+
+.blurred {
+  filter: blur(3px);
+  transition: all 300ms ease-in-out;
+}
+
+.blurred.active, #secret-content:active {
+  filter: blur(0px);
 }

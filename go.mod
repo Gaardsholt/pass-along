@@ -1,15 +1,15 @@
 module github.com/Gaardsholt/pass-along
 
-go 1.17
+go 1.18
 
 require (
-	github.com/alicebob/miniredis/v2 v2.18.0
+	github.com/alicebob/miniredis/v2 v2.21.0
 	github.com/gomodule/redigo v1.8.8
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/rs/zerolog v1.26.1
-	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
+	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
+	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 )
