@@ -33,7 +33,7 @@ Used to specify the port your redis server is using.
 
 ```bash
 curl --request POST \
-  --url http://localhost:8080/ \
+  --url http://localhost:8080/api \
   --header 'Content-Type: application/json' \
   --data '{
 	"content": "some super secret stuff goes here",
@@ -47,12 +47,12 @@ The reponse will be the ID of your secret, which can be used to fetch it again.
 
 ## Fetch a secret
 
-To fetch you secret again to a GET request to `http://localhost:8080/<your-secret-id-goes-here>`
+To fetch you secret again to a GET request to `http://localhost:8080/api/<your-secret-id-goes-here>`
 
 For example:
 ```bash
 curl --request GET \
-  --url http://localhost:8080/Jsm9nDvKVhtAQEfz1Bukx7jHeKIBpPV8kX0B_a4w2rEqAke0MYJ_uvGc30s6o85TiIn-qeBm_9S55ajlDzysRw
+  --url http://localhost:8080/api/Jsm9nDvKVhtAQEfz1Bukx7jHeKIBpPV8kX0B_a4w2rEqAke0MYJ_uvGc30s6o85TiIn-qeBm_9S55ajlDzysRw
 ```
 
 
