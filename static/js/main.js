@@ -25,6 +25,9 @@ class SecretManager {
   get revealSecretText() {
     return document.getElementById("revealSecret"); 
   }
+  get downloadFiles() {
+    return document.getElementById("download-files"); 
+  }
 
   displayNewSecret() {
     this.hideAll();
@@ -44,7 +47,26 @@ password goes here`;
           that.displayNotFound();
           return;
         }
-        that.readSecretContent.value = response;
+        response = JSON.parse(response);
+
+        that.readSecretContent.value = response.content;
+
+        if (response.files != null) {
+          for (const [key, value] of Object.entries(response.files)) {
+            var li = document.createElement('li');
+            var link = document.createElement("a");
+            var linkText = document.createTextNode(key)
+            link.appendChild(linkText);
+            link.href = "data:text/plain;base64," + value;
+            link.download = key;
+
+            li.appendChild(link);
+            that.downloadFiles.appendChild(li);
+          }
+
+          that.downloadFiles.style = "display: block";
+        }
+
         that.revealSecretText.style = "display: none";
         that.readSecretContent.classList.add('active');
       });
@@ -96,6 +118,7 @@ try {
   }, false);
 
   document.getElementById("save").addEventListener("click", function () {
+
     var content = document.getElementById("secret-content").value;
     var expires_in = parseInt(document.getElementById("valid-for").value)
 
@@ -109,7 +132,6 @@ try {
 } catch (error) {
 
 }
-
 
 function createSecret(content, expiresIn) {
   const data = JSON.stringify({
@@ -127,19 +149,6 @@ function createSecret(content, expiresIn) {
   });
 }
 
-function readSecret(id) {
-  doCall("GET", "/api/" + id, null, function(status, response) {
-
-    if (status === 410) {
-      window.secretManager.displayNotFound();
-      return;
-    }
-    window.secretManager.readSecretContent.value = response
-    window.secretManager.displaySecret();
-
-  });
-}
-
 function doCall(type, url, data, fn) {
   const xhr = new XMLHttpRequest();
   xhr.withCredentials = true;
@@ -150,11 +159,20 @@ function doCall(type, url, data, fn) {
     }
   });
 
+  
+
   xhr.open(type, url);
-  xhr.setRequestHeader("Content-Type", "application/json");
+  // xhr.setRequestHeader("Content-Type", "application/json");
 
   if (data) {
-    xhr.send(data);
+    const files = document.getElementById("files").files;
+    const formData = new FormData();
+    formData.append("data", data);
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    xhr.send(formData);
   }else {
     xhr.send();
   }

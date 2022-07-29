@@ -13,10 +13,11 @@ import (
 )
 
 type Secret struct {
-	Content        string    `json:"content"`
-	Expires        time.Time `json:"expires"`
-	TimeAdded      time.Time `json:"time_added"`
-	UnlimitedViews bool      `json:"unlimited_views"`
+	Content        string            `json:"content"`
+	Files          map[string][]byte `json:"files"`
+	Expires        time.Time         `json:"expires"`
+	TimeAdded      time.Time         `json:"time_added"`
+	UnlimitedViews bool              `json:"unlimited_views"`
 }
 
 func NewSecret(content string, expires time.Time) Secret {

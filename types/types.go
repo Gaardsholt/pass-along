@@ -12,9 +12,10 @@ type Page struct {
 	Startup time.Time `json:"startup"`
 }
 type Entry struct {
-	Content        string `json:"content"`
-	ExpiresIn      int    `json:"expires_in"`
-	UnlimitedViews bool   `json:"unlimited_views"`
+	Content        string            `json:"content"`
+	ExpiresIn      int               `json:"expires_in"`
+	UnlimitedViews bool              `json:"unlimited_views"`
+	Files          map[string][]byte `json:"files"`
 }
 
 type SecretStore struct {

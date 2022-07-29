@@ -3,7 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -94,11 +96,21 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 // NewHandler creates a new secret in the secretstore
 func NewHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
 	var entry types.Entry
-	err := json.NewDecoder(r.Body).Decode(&entry)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		err = json.NewDecoder(r.Body).Decode(&entry)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		err = getFormData(r, &entry)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 	}
 
 	log.Debug().Msg("Creating a new secret")
@@ -111,6 +123,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	mySecret := types.Secret{
 		Content:        entry.Content,
+		Files:          entry.Files,
 		Expires:        expires,
 		TimeAdded:      time.Now(),
 		UnlimitedViews: entry.UnlimitedViews,
@@ -155,12 +168,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decryptedSecret := ""
-
 	isNotExpired := s.Expires.UTC().After(time.Now().UTC())
 	if isNotExpired {
-		decryptedSecret = s.Content
 		go metrics.SecretsRead.Inc()
+		gotData = true
 	} else {
 		gotData = false
 		go metrics.ExpiredSecretsRead.Inc()
@@ -172,6 +183,49 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug().Msg("Fetching a secret")
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", decryptedSecret)
+	jsonResponse, jsonError := json.Marshal(s)
+	if jsonError != nil {
+		fmt.Println("Unable to encode JSON")
+	}
+
+	if gotData {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+		return
+	}
+
+	fmt.Fprintf(w, "")
+}
+
+func getFormData(r *http.Request, entry *types.Entry) error {
+	r.ParseMultipartForm(32 << 20) // 32 MB
+	mForm := r.MultipartForm
+
+	myData := mForm.Value["data"][0]
+
+	json.Unmarshal([]byte(myData), &entry)
+
+	err := json.Unmarshal([]byte(myData), &entry)
+	if err != nil {
+		return err
+	}
+
+	filesMap := map[string][]byte{}
+
+	for _, fileHeader := range mForm.File["files"] {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		fileBytes, err := ioutil.ReadAll(file)
+		filesMap[fileHeader.Filename] = fileBytes
+	}
+
+	if len(filesMap) > 0 {
+		entry.Files = filesMap
+	}
+	return nil
 }
