@@ -8,26 +8,37 @@ The main application uses port `8080`.
 ## Server config
 
 The following config can be set via environment variables
-| Tables                        | Required | Default   |
-| ----------------------------- | :------: | --------- |
-| [SERVERSALT](#SERVERSALT)     |          |           |
-| [DATABASETYPE](#DATABASETYPE) |          | in-memory |
-| [REDISSERVER](#REDISSERVER)   |          | localhost |
-| [REDISPORT](#REDISPORT)       |          | 6379      |
+| Tables                          | Required | Default   |
+| ------------------------------- | :------: | --------- |
+| [SERVER_SALT](#SERVER_SALT)     |          |           |
+| [DATABASE_TYPE](#DATABASE_TYPE) |          | in-memory |
+| [REDIS_SERVER](#REDIS_SERVER)   |          | localhost |
+| [REDIS_PORT](#REDIS_PORT)       |          | 6379      |
+| [SERVER_PORT](#SERVER_PORT)     |          | 8080      |
+| [HEALTH_PORT](#HEALTH_PORT)     |          | 8888      |
+| [LOG_LEVEL](#LOG_LEVEL)         |          | info      |
 
 
-### SERVERSALT
+### SERVER_SALT
 For extra security you can add your own salt when encrypting the data.
 
-### DATABASETYPE
+### DATABASE_TYPE
 Can either be `in-memory` or `redis`.
 
-### REDISSERVER
+### REDIS_SERVER
 Address to your redis server.
 
-### REDISPORT
+### REDIS_PORT
 Used to specify the port your redis server is using.
 
+### SERVER_PORT
+Listen port for api and ui endpoint.
+
+### HEALTH_PORT
+Listen port for health endpoint, used mainly for liveness probes.
+
+### LOG_LEVEL
+Used to specify loglevels, valid values are: `debug`, `info`, `warn` and `error`
 
 ## Create a new secret
 
