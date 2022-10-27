@@ -30,6 +30,37 @@ commands:
             docker push gaardsholt/$CIRCLE_PROJECT_REPONAME --all-tags
 
 jobs:
+  test:
+    executor: go_image
+    steps:
+      - checkout
+      - run:
+          name: Download needed tools
+          command: |
+            go install gotest.tools/gotestsum@latest
+      - run:
+          name: go mod download
+          command: go mod download
+      - run:
+          name: go vet
+          when: always
+          command: go vet ./...
+      - run:
+          name: go fmt
+          when: always
+          command: |
+            gofmt -d -e .
+            if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+              exit 1
+            fi
+      - run:
+          name: go test
+          when: always
+          command: |
+            mkdir junit
+            gotestsum --junitfile junit/unit-tests.xml
+      - store_test_results:
+          path: ~/project/junit
   build:
     executor: go_image
     steps:
@@ -51,15 +82,24 @@ jobs:
 
 
 workflows:
-  build:
+  test_n_build:
     jobs:
+      - test:
+          context: gaardsholt
+          filters:
+            tags:
+              ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build:
           context: gaardsholt
+          requires:
+            - test
           filters:
             tags:
               ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build_docker:
           context: gaardsholt
+          requires:
+            - test
           filters:
             tags:
               ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
