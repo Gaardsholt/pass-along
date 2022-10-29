@@ -6,7 +6,7 @@ executors:
       - image: cimg/go:1.19
   docker_image:
     docker:
-      - image: cimg/base:stable-18.04
+      - image: cimg/base:stable
 
 commands:
   docker_build:
@@ -85,19 +85,16 @@ workflows:
   test_n_build:
     jobs:
       - test:
-          context: gaardsholt
           filters:
             tags:
               ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build:
-          context: gaardsholt
           requires:
             - test
           filters:
             tags:
               ignore: /^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
       - build_docker:
-          context: gaardsholt
           requires:
             - test
           filters:
