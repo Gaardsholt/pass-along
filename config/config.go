@@ -22,7 +22,7 @@ type GlobalConfig struct {
 
 var Config GlobalConfig
 
-//LoadConfig Loads config from env
+// LoadConfig Loads config from env
 func LoadConfig() {
 	err := envconfig.Process("", &Config)
 	if err != nil {
