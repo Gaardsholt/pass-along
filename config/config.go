@@ -11,13 +11,14 @@ import (
 
 // GlobalConfig holds config parameters
 type GlobalConfig struct {
-	ServerPort   *int    `required:"false" split_words:"true"`
-	HealthPort   *int    `required:"false" split_words:"true"`
-	ServerSalt   string  `required:"false" split_words:"true"`
-	DatabaseType *string `required:"false" split_words:"true" default:"in-memory"`
-	RedisServer  *string `required:"false" split_words:"true"`
-	RedisPort    *int    `required:"false" split_words:"true"`
-	LogLevel     string  `required:"false" split_words:"true"`
+	ServerPort      *int    `required:"false" split_words:"true"`
+	HealthPort      *int    `required:"false" split_words:"true"`
+	ServerSalt      string  `required:"false" split_words:"true"`
+	DatabaseType    *string `required:"false" split_words:"true" default:"in-memory"`
+	RedisServer     *string `required:"false" split_words:"true"`
+	RedisPort       *int    `required:"false" split_words:"true"`
+	LogLevel        string  `required:"false" split_words:"true"`
+	ValidForOptions []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
 }
 
 var Config GlobalConfig

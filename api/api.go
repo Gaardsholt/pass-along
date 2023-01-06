@@ -53,6 +53,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
 	external.HandleFunc("/api", NewHandler).Methods("POST")
+	external.HandleFunc("/api/valid-for-options", ValidForHandler).Methods("GET")
 	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
 	external.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
 
@@ -146,6 +147,52 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "%s", id)
+}
+
+// ValidForHandler returns the options you can choose in "Valid for" field
+func ValidForHandler(w http.ResponseWriter, r *http.Request) {
+	options := map[int]string{}
+
+	for _, v := range config.Config.ValidForOptions {
+		options[v] = humanDuration(v)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(options)
+}
+
+// humanDuration converts duration in seconds to human readable format
+func humanDuration(duration int) string {
+	if duration < 60 {
+		if duration == 1 {
+			return fmt.Sprintf("%d second", duration)
+		}
+		return fmt.Sprintf("%d seconds", duration)
+	}
+
+	if duration < 3600 {
+		duration = duration / 60
+		if duration == 1 {
+			return fmt.Sprintf("%d minute", duration)
+		}
+		return fmt.Sprintf("%d minutes", duration)
+	}
+
+	if duration < 86400 {
+		duration = duration / 60 / 60
+		if duration == 1 {
+			return fmt.Sprintf("%d hour", duration)
+		}
+		return fmt.Sprintf("%d hours", duration)
+	}
+
+	duration = duration / 60 / 60 / 24
+	if duration == 1 {
+		return fmt.Sprintf("%d day", duration)
+	}
+
+	return fmt.Sprintf("%d days", duration/60/60/24)
 }
 
 // GetHandler retrieves a secret in the secret store

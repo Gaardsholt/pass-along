@@ -1,8 +1,19 @@
 class SecretManager {
-  // constructor(height, width) {
-  //   this.height = height;
-  //   this.width = width;
-  // }
+  constructor() {
+    doCall("GET", "/api/valid-for-options", null, function(status, response) {
+      const JsonResponse = JSON.parse(response);
+      
+      let validForElement = document.getElementById("valid-for");
+
+      for (const key in JsonResponse) {
+        var opt = document.createElement('option');
+        opt.value = key;
+        opt.innerHTML = `Valid for ${JsonResponse[key]}`;
+        validForElement.appendChild(opt);
+      }
+
+    });
+  }
 
   get mainContainer() {
     return document.getElementById("main");
