@@ -8,15 +8,16 @@ The main application uses port `8080`.
 ## Server config
 
 The following config can be set via environment variables
-| Tables                          | Required | Default   |
-| ------------------------------- | :------: | --------- |
-| [SERVER_SALT](#SERVER_SALT)     |          |           |
-| [DATABASE_TYPE](#DATABASE_TYPE) |          | in-memory |
-| [REDIS_SERVER](#REDIS_SERVER)   |          | localhost |
-| [REDIS_PORT](#REDIS_PORT)       |          | 6379      |
-| [SERVER_PORT](#SERVER_PORT)     |          | 8080      |
-| [HEALTH_PORT](#HEALTH_PORT)     |          | 8888      |
-| [LOG_LEVEL](#LOG_LEVEL)         |          | info      |
+| Tables                                  | Required | Default               |
+| --------------------------------------- | :------: | --------------------- |
+| [SERVER_SALT](#SERVER_SALT)             |          |                       |
+| [DATABASE_TYPE](#DATABASE_TYPE)         |          | in-memory             |
+| [REDIS_SERVER](#REDIS_SERVER)           |          | localhost             |
+| [REDIS_PORT](#REDIS_PORT)               |          | 6379                  |
+| [SERVER_PORT](#SERVER_PORT)             |          | 8080                  |
+| [HEALTH_PORT](#HEALTH_PORT)             |          | 8888                  |
+| [LOG_LEVEL](#LOG_LEVEL)                 |          | info                  |
+| [VALID_FOR_OPTIONS](#VALID_FOR_OPTIONS) |          | 3600,7200,43200,86400 |
 
 
 ### SERVER_SALT
@@ -39,6 +40,9 @@ Listen port for health endpoint, used mainly for liveness probes.
 
 ### LOG_LEVEL
 Used to specify loglevels, valid values are: `debug`, `info`, `warn` and `error`
+
+### VALID_FOR_OPTIONS
+Which options are available in the UI for secret expiration.
 
 ## Create a new secret
 
