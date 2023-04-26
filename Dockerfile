@@ -6,10 +6,15 @@ RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s" -o /tmp/ap
 FROM alpine
 RUN mkdir /app
 WORKDIR /app
-COPY --from=builder /tmp/app app
+
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser -S -u 1001 -G appgroup appuser && \
+    chown -R appuser:appgroup /app
+
+COPY --chown=1001:1001 --from=builder /tmp/app app
+
 ADD ./static static/
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser /app
 USER appuser
 
 CMD ["/app/app"]
