@@ -1,5 +1,7 @@
 # Pass-along
 
+[![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7427/badge)](https://bestpractices.coreinfrastructure.org/projects/7427)
+
 The main application uses port `8080`.
 
  `/healthz` and `/metrics` endpoints uses port `8888`.
