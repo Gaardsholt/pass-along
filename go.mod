@@ -7,7 +7,7 @@ require (
 	github.com/gomodule/redigo v1.8.9
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/prometheus/client_golang v1.16.0
+	github.com/prometheus/client_golang v1.17.0
 	github.com/rs/zerolog v1.30.0
 	golang.org/x/crypto v0.12.0
 	gotest.tools v2.2.0+incompatible
@@ -23,10 +23,10 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.42.0 // indirect
-	github.com/prometheus/procfs v0.10.1 // indirect
+	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
+	github.com/prometheus/common v0.44.0 // indirect
+	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/yuin/gopher-lua v1.1.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 )
