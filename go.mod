@@ -9,7 +9,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.16.0
 	github.com/rs/zerolog v1.30.0
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.13.0
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -27,6 +27,6 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/yuin/gopher-lua v1.1.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
