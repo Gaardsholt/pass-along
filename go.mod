@@ -9,7 +9,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rs/zerolog v1.31.0
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.17.0
 	gotest.tools v2.2.0+incompatible
 )
 
