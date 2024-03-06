@@ -3,7 +3,7 @@ version: 2.1
 executors:
   go_image:
     docker:
-      - image: cimg/go:1.21.6
+      - image: cimg/go:1.22.1
   docker_image:
     docker:
       - image: cimg/base:stable
