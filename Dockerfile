@@ -1,19 +1,21 @@
-FROM golang:1.22-alpine AS builder
-WORKDIR $GOPATH/src/app
-COPY . .
-RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s" -o /tmp/app
+FROM golang:1.23.4-alpine AS builder
+WORKDIR /app
 
-FROM alpine
-RUN mkdir /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s"
+
+FROM alpine:3.21.0
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 appgroup && \
     adduser -S -u 1001 -G appgroup appuser && \
     chown -R appuser:appgroup /app
 
-COPY --chown=1001:1001 --from=builder /tmp/app app
-
-ADD ./static static/
+COPY --chown=1001:1001 --from=builder /app/pass-along pass-along
+COPY ./static static/
 
 USER appuser
 
