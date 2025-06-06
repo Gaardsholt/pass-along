@@ -177,7 +177,6 @@ const params = new Proxy(new URLSearchParams(window.location.search), {
 
 if (params.id) {
   window.secretManager.displaySecret(params.id);
-  // readSecret(params.id);
 } else {
   window.secretManager.displayNewSecret();
 }
