@@ -45,12 +45,19 @@ class SecretManager {
 
             const li = document.createElement("li");
             li.className = "file-item";
-            li.innerHTML = `
-              <div>
-                <div class="file-name">${file.name}</div>
-                <div class="file-size">${fileSize}</div>
-              </div>
-            `;
+            const fileNameDiv = document.createElement("div");
+            fileNameDiv.className = "file-name";
+            fileNameDiv.textContent = file.name;
+
+            const fileSizeDiv = document.createElement("div");
+            fileSizeDiv.className = "file-size";
+            fileSizeDiv.textContent = fileSize;
+
+            const fileContainerDiv = document.createElement("div");
+            fileContainerDiv.appendChild(fileNameDiv);
+            fileContainerDiv.appendChild(fileSizeDiv);
+
+            li.appendChild(fileContainerDiv);
 
             fileList.appendChild(li);
           }
