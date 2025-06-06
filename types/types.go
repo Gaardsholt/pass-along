@@ -2,14 +2,12 @@ package types
 
 import (
 	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Page struct {
-	Content string    `json:"content"`
-	Startup time.Time `json:"startup"`
+	Content string `json:"content"`
 }
 type Entry struct {
 	Content        string            `json:"content"`

@@ -25,13 +25,10 @@ const (
 )
 
 var secretStore datastore.SecretStore
-var startupTime time.Time
 var lock = sync.RWMutex{}
 
 // StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
-	startupTime = time.Now()
-
 	databaseType, err := config.Config.GetDatabaseType()
 	if err != nil {
 		log.Fatal().Err(err).Msgf("%s", err)
