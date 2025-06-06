@@ -6,68 +6,111 @@
   <title>Pass-along</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Primary Meta Tags -->
+  <!-- Primary Meta Tags -->
   <title>Pass-along — Send secrets, securely</title>
   <meta name="title" content="Pass-along — Send secrets, securely">
   <meta name="description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <!-- <meta property="og:url" content="https://metatags.io/"> -->
   <meta property="og:title" content="Pass-along — Send secrets, securely">
-  <meta property="og:description" content="This service allows you to share your secrets, passwords or anything you like,  securely">
-  <!-- <meta property="og:image" content="https://metatags.io/assets/meta-tags-16a33a6a8531e519cc0936fbba0ad904e52d35f34a46c97a2c9f6f7dd7d336f2.png"> -->
+  <meta property="og:description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <!-- <meta property="twitter:url" content="https://metatags.io/"> -->
   <meta property="twitter:title" content="Pass-along — Send secrets, securely">
-  <meta property="twitter:description" content="This service allows you to share your secrets, passwords or anything you like,  securely">
-  <!-- <meta property="twitter:image" content="https://metatags.io/assets/meta-tags-16a33a6a8531e519cc0936fbba0ad904e52d35f34a46c97a2c9f6f7dd7d336f2.png"> -->
+  <meta property="twitter:description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
   <link rel="stylesheet" href="/css/main.css" />
 </head>
 
 <body>
   <div id="root">
     <div id="main">
-      <h1>Pass-along</h1>
-      <div id="create-secret" style="display:none;">
-        <p>
-          <textarea name="xyz" class="input blurred" id="secret-content" placeholder="Write all of your secrets here..."
-          autocomplete="nope" onchange="updateSaveButton(this);" onkeyup="updateSaveButton(this);"></textarea>
-        </p>
+      <h1 class="page-title">Pass-along</h1>
+      <p class="page-subtitle">Share your secrets securely</p>
 
-        <p>
+      <div id="create-secret" class="fade-in" style="display:none;">
+        <div class="card">
+          <label class="input-label">Your Secret</label>
+          <textarea name="xyz" class="input blurred" id="secret-content"
+            placeholder="Type your sensitive information here..." autocomplete="nope"
+            onchange="updateSaveButton(this);" onkeyup="updateSaveButton(this);"></textarea>
+        </div>
+
+        <div class="card">
+          <label class="input-label">Expiration</label>
           <select id="valid-for" name="valid-for" class="input"></select>
-        </p>
+        </div>
 
-        <p>
-          <input type="file" id="files" name="files" multiple>
-        </p>
+        <div class="file-input-container">
+          <label class="file-input-label" for="files">
+            <span class="file-input-icon"><i data-feather="upload-cloud"></i></span>
+            <span class="file-input-text">Drop files here or click to browse</span>
+          </label>
+          <input type="file" id="files" name="files" class="file-input" multiple>
+          <ul id="file-list" class="file-list"></ul>
+        </div>
 
-        <button id="save" class="save" style="width: 100%;margin-bottom: 25px;" disabled="true">Create link</button>
+        <button id="save" class="button" disabled="true">
+          <span class="button-icon"><i data-feather="lock"></i></span>
+          <span>Create Secure Link</span>
+        </button>
       </div>
-      <div id="read-secret" style="display:none;">
-        <p style="position: relative;display: flex;justify-content: center;align-items: center;">
-          <textarea name="xyz" class="input blurred" id="read-secret-content" autocomplete="nope" readonly></textarea>
-          <span id="revealSecret" style="position: absolute;color: black;text-align: center;font-size: 1.5rem;justify-content: center;cursor: pointer;padding:1em;">Click here to reveal the secrets</span>
-        </p>
-        <ul id="download-files" style="display:none;" ></ul>
-        <p>Click here to create your own <a href="/">secret</a></p>
+
+      <div id="read-secret" class="fade-in" style="display:none;">
+        <div class="card">
+          <div class="position-relative">
+            <textarea name="xyz" class="input blurred" id="read-secret-content" autocomplete="nope" readonly></textarea>
+            <div id="revealSecret" class="secret-reveal">
+              <div class="secret-reveal-text">
+                <span class="secret-reveal-icon"><i data-feather="eye"></i></span>
+                <span>Click to reveal secret</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="download-files-container" style="display:none;" class="card">
+          <label class="input-label">Attached Files</label>
+          <div id="download-files"></div>
+        </div>
+
+        <button class="button button-outline" onclick="window.location='/'">
+          <span class="button-icon"><i data-feather="plus"></i></span>
+          <span>Create New Secret</span>
+        </button>
       </div>
-      <div id="not-found" style="display:none;">
-        <pre>The secret is no longer available.
-It has either already been read or it has expired.
-Or the link is just malformed.</pre>
-        <p>Click here to create your own <a href="/">secret</a></p>
+
+      <div id="not-found" class="fade-in" style="display:none;">
+        <div class="alert alert-danger">
+          <h3 style="margin-top: 0;">Secret Not Found</h3>
+          <p>This secret is no longer available. It has either already been read or has expired.</p>
+        </div>
+
+        <button class="button" onclick="window.location='/'">
+          <span class="button-icon"><i data-feather="plus"></i></span>
+          <span>Create New Secret</span>
+        </button>
       </div>
     </div>
   </div>
+
   <div id="share-url-container">
-    <h2>Copy link</h2>
-    <input id="share-url" class="input" readonly="readonly" type="text" value='' />
+    <h2><i data-feather="link" style="vertical-align: middle; margin-right: 0.5rem;"></i> Your Secret Link</h2>
+    <p>Share this link with the person who needs to see your secret. The link works only once and expires after the selected time.</p>
+    <div style="display: flex; margin-bottom: 1rem; position: relative;">
+      <input id="share-url" class="input" readonly="readonly" type="text" value='' />
+      <span id="copy-success" class="copy-success">Copied!</span>
+    </div>
+    <button id="copy-button" class="button">
+      <span class="button-icon"><i data-feather="clipboard"></i></span>
+      <span>Copy Link</span>
+    </button>
   </div>
+
   <div id="overlay" class="overlay"></div>
   <div class="startup">{{.Startup}}</div>
 

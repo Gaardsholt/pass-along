@@ -6,43 +6,54 @@
   <title>Pass-along</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Primary Meta Tags -->
+  <!-- Primary Meta Tags -->
   <title>Pass-along — Send secrets, securely</title>
   <meta name="title" content="Pass-along — Send secrets, securely">
   <meta name="description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <!-- <meta property="og:url" content="https://metatags.io/"> -->
   <meta property="og:title" content="Pass-along — Send secrets, securely">
-  <meta property="og:description" content="This service allows you to share your secrets, passwords or anything you like,  securely">
-  <!-- <meta property="og:image" content="https://metatags.io/assets/meta-tags-16a33a6a8531e519cc0936fbba0ad904e52d35f34a46c97a2c9f6f7dd7d336f2.png"> -->
+  <meta property="og:description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <!-- <meta property="twitter:url" content="https://metatags.io/"> -->
   <meta property="twitter:title" content="Pass-along — Send secrets, securely">
-  <meta property="twitter:description" content="This service allows you to share your secrets, passwords or anything you like,  securely">
-  <!-- <meta property="twitter:image" content="https://metatags.io/assets/meta-tags-16a33a6a8531e519cc0936fbba0ad904e52d35f34a46c97a2c9f6f7dd7d336f2.png"> -->
+  <meta property="twitter:description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
-  <link rel="stylesheet" href="/assets/css/main.css" />
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="/css/main.css" />
+  <meta name="theme-color" content="#121212">
+  <meta name="color-scheme" content="dark">
 </head>
 
 <body>
   <div id="root">
     <div id="main">
-      <h1>Pass-along</h1>
+      <h1 class="page-title">Pass-along</h1>
+      <p class="page-subtitle">Share your secrets securely</p>
       {{template "content" .}}
     </div>
   </div>
+
   <div id="share-url-container">
-    <h2>Copy link</h2>
-    <input id="share-url" class="input" readonly="readonly" type="text" value='' />
+    <h2><i data-feather="link" style="vertical-align: middle; margin-right: 0.5rem;"></i> Your Secret Link</h2>
+    <p>Share this link with the person who needs to see your secret. The link works only once and expires after the selected time.</p>
+    <div style="display: flex; margin-bottom: 1rem; position: relative;">
+      <input id="share-url" class="input" readonly="readonly" type="text" value='' />
+      <span id="copy-success" class="copy-success">Copied!</span>
+    </div>
+    <button id="copy-button" class="button">
+      <span class="button-icon"><i data-feather="clipboard"></i></span>
+      <span>Copy Link</span>
+    </button>
   </div>
+
   <div id="overlay" class="overlay"></div>
   <div class="startup">{{.Startup}}</div>
 
-  <script src="/assets/js/main.js"></script>
+  <script src="/js/main.js"></script>
 </body>
 
 </html>

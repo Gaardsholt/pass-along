@@ -1,17 +1,34 @@
 {{define "content"}}
-<p>
-  <textarea name="xyz" class="input" id="secret-content" placeholder="Write all of your secrets here..."
-    autocomplete="nope" onchange="updateSaveButton(this);" onkeyup="updateSaveButton(this);"></textarea>
-</p>
+<div id="create-secret" class="fade-in">
+  <div class="card">
+    <label class="input-label">Your Secret</label>
+    <textarea name="xyz" class="input blurred" id="secret-content"
+      placeholder="Type your sensitive information here..." autocomplete="nope"
+      onchange="updateSaveButton(this);" onkeyup="updateSaveButton(this);"></textarea>
+  </div>
 
-<p>
-  <select id="valid-for" name="valid-for" class="input">
-    <option value="3600">Valid for 1 hour</option>
-    <option value="7200">Valid for 2 hours</option>
-    <option value="43200">Valid for 12 hours</option>
-    <option value="86400">Valid for 24 hours</option>
-  </select>
-</p>
+  <div class="card">
+    <label class="input-label">Expiration</label>
+    <select id="valid-for" name="valid-for" class="input">
+      <option value="3600">Valid for 1 hour</option>
+      <option value="7200">Valid for 2 hours</option>
+      <option value="43200">Valid for 12 hours</option>
+      <option value="86400">Valid for 24 hours</option>
+    </select>
+  </div>
 
-<button id="save" class="save" style="width: 100%;margin-bottom: 25px;" disabled="true">Create link</button>
+  <div class="file-input-container">
+    <label class="file-input-label" for="files">
+      <span class="file-input-icon"><i data-feather="upload-cloud"></i></span>
+      <span class="file-input-text">Drop files here or click to browse</span>
+    </label>
+    <input type="file" id="files" name="files" class="file-input" multiple>
+    <ul id="file-list" class="file-list"></ul>
+  </div>
+
+  <button id="save" class="button" disabled="true">
+    <span class="button-icon"><i data-feather="lock"></i></span>
+    <span>Create Secure Link</span>
+  </button>
+</div>
 {{end}}
