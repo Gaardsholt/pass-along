@@ -15,6 +15,10 @@ class SecretManager {
   initializeValidForOptions() {
     // Get expiration options from API
     doCall("GET", "/api/valid-for-options", null, (status, response) => {
+      if (status !== 200) {
+        console.error("Failed to fetch valid-for options. Status:", status, "Response:", response);
+        return;
+      }
       const JsonResponse = JSON.parse(response);
 
       let validForElement = document.getElementById("valid-for");
