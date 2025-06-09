@@ -4,9 +4,6 @@ import (
 	"sync"
 )
 
-type Page struct {
-	Content string `json:"content"`
-}
 type Entry struct {
 	Content        string            `json:"content"`
 	ExpiresIn      int               `json:"expires_in"`
