@@ -2,8 +2,6 @@ package types
 
 import (
 	"sync"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Page struct {
@@ -19,30 +17,4 @@ type Entry struct {
 type SecretStore struct {
 	Data map[string][]byte
 	Lock *sync.RWMutex
-}
-
-// Prometheus stuff
-type SecretsInCache struct {
-	counterDesc *prometheus.Desc
-	ss          *SecretStore
-}
-
-func (c *SecretsInCache) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.counterDesc
-}
-
-func (c *SecretsInCache) Collect(ch chan<- prometheus.Metric) {
-	value := float64(len(c.ss.Data)) // Your code to fetch the counter value goes here.
-	ch <- prometheus.MustNewConstMetric(
-		c.counterDesc,
-		prometheus.CounterValue,
-		value,
-	)
-}
-
-func NewSecretsInCache(ss *SecretStore) *SecretsInCache {
-	return &SecretsInCache{
-		counterDesc: prometheus.NewDesc("secrets_in_cache", "Current number of secrets in the cache.", nil, nil),
-		ss:          ss,
-	}
 }
