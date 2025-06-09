@@ -265,6 +265,9 @@ func getFormData(r *http.Request, entry *types.Entry) error {
 		defer file.Close()
 
 		fileBytes, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
 		filesMap[fileHeader.Filename] = fileBytes
 	}
 
