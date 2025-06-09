@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -264,7 +264,7 @@ func getFormData(r *http.Request, entry *types.Entry) error {
 		}
 		defer file.Close()
 
-		fileBytes, err := ioutil.ReadAll(file)
+		fileBytes, err := io.ReadAll(file)
 		filesMap[fileHeader.Filename] = fileBytes
 	}
 
