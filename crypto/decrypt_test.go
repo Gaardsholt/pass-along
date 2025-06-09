@@ -12,7 +12,7 @@ func TestDecryptAsExpected(t *testing.T) {
 	secretValue := "mysupersecretvalue"
 
 	// arrange
-	byteArray, err := GetBytes(secretValue)
+	byteArray, err := getBytes(secretValue)
 	if err != nil {
 		t.Error("encode error")
 	}

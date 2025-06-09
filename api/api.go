@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	ErrServerShuttingDown = "http: Server closed"
+	errServerShuttingDown = "http: Server closed"
 )
 
 var secretStore datastore.SecretStore
@@ -67,7 +67,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	go func() {
 		err := internalServer.ListenAndServe()
-		if err != nil && err.Error() != ErrServerShuttingDown {
+		if err != nil && err.Error() != errServerShuttingDown {
 			log.Fatal().Err(err).Msgf("Unable to run the internal server at port %d", internalPort)
 		}
 	}()
@@ -79,7 +79,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	}
 	go func() {
 		err := externalServer.ListenAndServe()
-		if err != nil && err.Error() != ErrServerShuttingDown {
+		if err != nil && err.Error() != errServerShuttingDown {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
