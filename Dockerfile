@@ -19,4 +19,4 @@ COPY ./static static/
 
 USER appuser
 
-CMD ["/app/app"]
+CMD ["/app/pass-along"]
