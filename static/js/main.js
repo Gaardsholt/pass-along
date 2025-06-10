@@ -204,7 +204,7 @@ class SecretManager {
         const errorMessage = response;
         this.displayError(errorTitle, errorMessage);
 
-        return
+        return;
       }
 
       var urlBox = document.getElementById("share-url");
