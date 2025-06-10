@@ -126,31 +126,29 @@ class SecretManager {
     this.readSecretContent.value = `Your secret will appear here`;
     this.readSecretContainer.style.display = "block";
 
-    const that = this;
-    this.revealSecretText.addEventListener("click", function () {
+    this.revealSecretText.addEventListener("click", () => {
       // Add loading state
-      that.revealSecretText.innerHTML = '<div class="secret-reveal-text"><span class="secret-reveal-icon"><i data-feather="loader"></i></span><span>Loading...</span></div>';
+      this.revealSecretText.innerHTML = '<div class="secret-reveal-text"><span class="secret-reveal-icon"><i data-feather="loader"></i></span><span>Loading...</span></div>';
       feather.replace();
 
-      doCall("GET", "/api/" + id, null, function (status, response) {
+      doCall("GET", "/api/" + id, null, (status, response) => {
         if (status === 410) {
           const errorTitle = "Secret Not Found";
-          const errorMessage = "This secret is no longer available. It has either already been read or has expired."
-          that.displayError(errorTitle, errorMessage);
+          const errorMessage = "This secret is no longer available. It has either already been read or has expired.";
+          this.displayError(errorTitle, errorMessage);
           return;
         } else if (status !== 200) {
-          console.error("Failed to fetch secret. Status:", status, "Response:", response);
           const errorTitle = "An error occured when trying to fetch the secret";
           const errorMessage = response;
-          that.displayError(errorTitle, errorMessage);
+          this.displayError(errorTitle, errorMessage);
           return;
         }
 
         response = JSON.parse(response);
-        that.readSecretContent.value = response.content;
+        this.readSecretContent.value = response.content;
 
         if (response.files != null && Object.keys(response.files).length > 0) {
-          that.downloadFiles.innerHTML = ''; // Clear previous content
+          this.downloadFiles.innerHTML = ''; // Clear previous content
 
           for (const [key, value] of Object.entries(response.files)) {
             const downloadItem = document.createElement("a");
@@ -162,15 +160,15 @@ class SecretManager {
               <span>${key}</span>
             `;
 
-            that.downloadFiles.appendChild(downloadItem);
+            this.downloadFiles.appendChild(downloadItem);
           }
 
-          that.downloadFilesContainer.style.display = "block";
+          this.downloadFilesContainer.style.display = "block";
           feather.replace();
         }
 
-        that.revealSecretText.style.display = "none";
-        that.readSecretContent.classList.add('active');
+        this.revealSecretText.style.display = "none";
+        this.readSecretContent.classList.add('active');
       });
     }, false);
   }
@@ -185,13 +183,41 @@ class SecretManager {
 
     this.hideAll();
     this.error.style.display = "block";
-
   }
 
   hideAll() {
     const divs = this.mainContainer.querySelectorAll("#create-secret, #read-secret, #not-found");
     divs.forEach(div => {
       div.style.display = "none";
+    });
+  }
+
+  createSecret(content, expiresIn) {
+    const data = JSON.stringify({
+      "content": content,
+      "expires_in": expiresIn
+    });
+
+    doCall("POST", "/api", data, (status, response) => {
+      if (status < 200 || status >= 300) {
+        const errorTitle = "An error occured when trying to create the secret";
+        const errorMessage = response;
+        this.displayError(errorTitle, errorMessage);
+
+        return
+      }
+
+      var urlBox = document.getElementById("share-url");
+      var shareUrl = window.location.origin + "/?id=" + response;
+      urlBox.value = shareUrl;
+
+      // Reset button state
+      const saveButton = document.getElementById("save");
+      saveButton.innerHTML = '<span class="button-icon"><i data-feather="check"></i></span><span>Success!</span>';
+      feather.replace();
+
+      // Show the share dialog
+      document.body.className += ' active';
     });
   }
 }
@@ -263,7 +289,7 @@ try {
     var content = document.getElementById("secret-content").value;
     var expires_in = parseInt(document.getElementById("valid-for").value);
 
-    createSecret(content, expires_in);
+    window.secretManager.createSecret(content, expires_in);
 
     // Reset button after timeout (in case of error)
     setTimeout(() => {
@@ -281,26 +307,6 @@ try {
   }, false);
 } catch (error) {
   console.error("Error setting up event handlers:", error);
-}
-
-function createSecret(content, expiresIn) {
-  const data = JSON.stringify({
-    "content": content,
-    "expires_in": expiresIn
-  });
-
-  doCall("POST", "/api", data, function (status, response) {
-    var shareUrl = window.location.origin + "/?id=" + response;
-    urlBox.value = shareUrl;
-
-    // Reset button state
-    const saveButton = document.getElementById("save");
-    saveButton.innerHTML = '<span class="button-icon"><i data-feather="check"></i></span><span>Success!</span>';
-    feather.replace();
-
-    // Show the share dialog
-    document.body.className += ' active';
-  });
 }
 
 function doCall(type, url, data, fn) {
