@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -21,17 +21,14 @@ import (
 )
 
 const (
-	ErrServerShuttingDown = "http: Server closed"
+	errServerShuttingDown = "http: Server closed"
 )
 
 var secretStore datastore.SecretStore
-var startupTime time.Time
 var lock = sync.RWMutex{}
 
 // StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
-	startupTime = time.Now()
-
 	databaseType, err := config.Config.GetDatabaseType()
 	if err != nil {
 		log.Fatal().Err(err).Msgf("%s", err)
@@ -70,7 +67,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	go func() {
 		err := internalServer.ListenAndServe()
-		if err != nil && err.Error() != ErrServerShuttingDown {
+		if err != nil && err.Error() != errServerShuttingDown {
 			log.Fatal().Err(err).Msgf("Unable to run the internal server at port %d", internalPort)
 		}
 	}()
@@ -82,7 +79,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	}
 	go func() {
 		err := externalServer.ListenAndServe()
-		if err != nil && err.Error() != ErrServerShuttingDown {
+		if err != nil && err.Error() != errServerShuttingDown {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
@@ -267,7 +264,10 @@ func getFormData(r *http.Request, entry *types.Entry) error {
 		}
 		defer file.Close()
 
-		fileBytes, err := ioutil.ReadAll(file)
+		fileBytes, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
 		filesMap[fileHeader.Filename] = fileBytes
 	}
 

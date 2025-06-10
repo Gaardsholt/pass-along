@@ -1,0 +1,44 @@
+# Docker ignore rules, largely based on .gitignore and Docker best practices
+# This helps keep the build context small and avoid including sensitive or unnecessary files.
+
+# Version control files
+.git/
+.gitignore
+# .dockerignore # This file itself. Usually not needed to ignore.
+# Dockerfile # If your Dockerfile is in the context and you don't want it in the image.
+
+# Go specific build artifacts and files
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+pass-along
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+# These are often better handled via multi-stage Docker builds
+# by copying go.mod/go.sum and running `go mod download` or `go build` inside a build stage.
+/vendor/
+/Godeps/
+
+# IDE & Editor specific files
+.vscode/
+*.code-workspace
+.history/
+.ionide
+
+# OS specific files (from .gitignore)
+.DS_Store
+
+# Add any other files or directories that should not be part of the Docker context.
+# Examples:
+# *.log
+# local_config.yaml
+# /docs/

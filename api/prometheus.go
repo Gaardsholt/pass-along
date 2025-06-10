@@ -9,7 +9,6 @@ var pr *prometheus.Registry
 
 func registerPrometheusMetrics() {
 	pr = prometheus.NewRegistry()
-	// pr.MustRegister(types.NewSecretsInCache(&secretStore))
 	pr.MustRegister(metrics.SecretsRead)
 	pr.MustRegister(metrics.ExpiredSecretsRead)
 	pr.MustRegister(metrics.NonExistentSecretsRead)

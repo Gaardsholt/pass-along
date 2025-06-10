@@ -8,7 +8,7 @@ import (
 )
 
 func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, err error) {
-	byteArray, err := GetBytes(data)
+	byteArray, err := getBytes(data)
 	if err != nil {
 		return nil, err
 	}
