@@ -138,7 +138,7 @@ class SecretManager {
           this.displayError(errorTitle, errorMessage);
           return;
         } else if (status !== 200) {
-          const errorTitle = "An error occured when trying to fetch the secret";
+          const errorTitle = "An error occurred when trying to fetch the secret";
           const errorMessage = response;
           this.displayError(errorTitle, errorMessage);
           return;
