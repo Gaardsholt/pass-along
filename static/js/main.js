@@ -24,7 +24,7 @@ class SecretManager {
       let validForElement = document.getElementById("valid-for");
 
       for (const key in JsonResponse) {
-        var opt = document.createElement('option');
+        let opt = document.createElement('option');
         opt.value = key;
         opt.innerHTML = `Valid for ${JsonResponse[key]}`;
         validForElement.appendChild(opt);
@@ -207,8 +207,8 @@ class SecretManager {
         return;
       }
 
-      var urlBox = document.getElementById("share-url");
-      var shareUrl = window.location.origin + "/?id=" + response;
+      let urlBox = document.getElementById("share-url");
+      let shareUrl = window.location.origin + "/?id=" + response;
       urlBox.value = shareUrl;
 
       // Reset button state
@@ -235,14 +235,14 @@ if (params.id) {
 }
 
 
-var updateSaveButton = function (el) {
+let updateSaveButton = function (el) {
   document.getElementById("save").disabled = el.value.trim() === "";
 };
 
 try {
   // Handle URL box interactions
-  var urlBox = document.getElementById("share-url");
-  var copySuccess = document.getElementById("copy-success");
+  let urlBox = document.getElementById("share-url");
+  let copySuccess = document.getElementById("copy-success");
 
   urlBox.addEventListener("click", function () {
     urlBox.focus();
@@ -282,8 +282,8 @@ try {
     saveButton.innerHTML = '<span class="button-icon"><i data-feather="loader"></i></span><span>Creating...</span>';
     feather.replace();
 
-    var content = document.getElementById("secret-content").value;
-    var expires_in = parseInt(document.getElementById("valid-for").value);
+    let content = document.getElementById("secret-content").value;
+    let expires_in = parseInt(document.getElementById("valid-for").value);
 
     window.secretManager.createSecret(content, expires_in);
 
