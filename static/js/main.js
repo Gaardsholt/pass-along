@@ -235,10 +235,6 @@ if (params.id) {
 }
 
 
-
-
-
-
 var updateSaveButton = function (el) {
   document.getElementById("save").disabled = el.value.trim() === "";
 };
