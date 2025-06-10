@@ -96,8 +96,8 @@ class SecretManager {
     return document.getElementById("read-secret-content");
   }
 
-  get notFound() {
-    return document.getElementById("not-found");
+  get error() {
+    return document.getElementById("error");
   }
 
   get createSecretContainer() {
@@ -134,7 +134,15 @@ class SecretManager {
 
       doCall("GET", "/api/" + id, null, function (status, response) {
         if (status === 410) {
-          that.displayNotFound();
+          const errorTitle = "Secret Not Found";
+          const errorMessage = "This secret is no longer available. It has either already been read or has expired."
+          that.displayError(errorTitle, errorMessage);
+          return;
+        } else if (status !== 200) {
+          console.error("Failed to fetch secret. Status:", status, "Response:", response);
+          const errorTitle = "An error occured when trying to fetch the secret";
+          const errorMessage = response;
+          that.displayError(errorTitle, errorMessage);
           return;
         }
 
@@ -167,9 +175,17 @@ class SecretManager {
     }, false);
   }
 
-  displayNotFound() {
+  /**
+   * @param {string} title - Title to display when an error happens.
+   * @param {string} message - Message to display when an error happens.
+   */
+  displayError(title, message) {
+    this.error.querySelector(".error-title").textContent = title;
+    this.error.querySelector(".error-message").textContent = message;
+
     this.hideAll();
-    this.notFound.style.display = "block";
+    this.error.style.display = "block";
+
   }
 
   hideAll() {
@@ -298,6 +314,7 @@ function doCall(type, url, data, fn) {
   });
 
   xhr.open(type, url);
+  xhr.setRequestHeader("Cache-Control", "no-cache, no-store, max-age=0");
 
   if (data) {
     const files = document.getElementById("files").files;
