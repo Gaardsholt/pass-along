@@ -200,7 +200,7 @@ class SecretManager {
 
     doCall("POST", "/api", data, (status, response) => {
       if (status < 200 || status >= 300) {
-        const errorTitle = "An error occured when trying to create the secret";
+        const errorTitle = "An error occurred when trying to create the secret";
         const errorMessage = response;
         this.displayError(errorTitle, errorMessage);
 
