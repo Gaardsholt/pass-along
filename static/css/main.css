@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
 :root {
   --bg-dark: #121212;
   --bg-card: #1e1e1e;
@@ -33,8 +35,6 @@
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 html {
   background-color: var(--bg-dark);
