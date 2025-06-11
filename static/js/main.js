@@ -6,6 +6,9 @@ class SecretManager {
   }
 
 
+  /**
+   * Initializes the "valid for" options by fetching them from the API.
+   */
   initializeValidForOptions() {
     // Get expiration options from API
     doCall("GET", "/api/valid-for-options", null, (status, response) => {
@@ -26,6 +29,9 @@ class SecretManager {
     });
   }
 
+  /**
+   * Initializes the blur toggle functionality for the secret content textarea.
+   */
   initializeBlurToggle() {
     const localStorageKey = "keepBlurredOnFocus";
     const classKeepBlurred = "keep-blurred-on-focus";
@@ -61,6 +67,9 @@ class SecretManager {
     }
   }
 
+  /**
+   * Initializes the file input handling.
+   */
   initializeFileInput() {
     // Handle file input changes
     const fileInput = document.getElementById("files");
@@ -99,6 +108,11 @@ class SecretManager {
     }
   }
 
+  /**
+   * Formats file size from bytes to a human-readable string.
+   * @param {number} bytes - The file size in bytes.
+   * @returns {string} The formatted file size.
+   */
   formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
 
@@ -109,51 +123,88 @@ class SecretManager {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  /**
+   * @returns {HTMLElement | null} The main container element.
+   */
   get mainContainer() {
     return document.getElementById("main");
   }
 
+  /**
+   * @returns {HTMLElement | null} The secret content textarea element.
+   */
   get secretContent() {
     return document.getElementById("secret-content");
   }
 
+  /**
+   * @returns {HTMLInputElement | null} The keep blurred toggle checkbox element.
+   */
   get keepBlurredToggle() {
     return document.getElementById("keep-blurred-toggle");
   }
 
+  /**
+   * @returns {HTMLElement | null} The read secret container element.
+   */
   get readSecretContainer() {
     return document.getElementById("read-secret");
   }
 
+  /**
+   * @returns {HTMLTextAreaElement | null} The read secret content textarea element.
+   */
   get readSecretContent() {
     return document.getElementById("read-secret-content");
   }
 
+  /**
+   * @returns {HTMLElement | null} The error display element.
+   */
   get error() {
     return document.getElementById("error");
   }
 
+  /**
+   * @returns {HTMLElement | null} The create secret container element.
+   */
   get createSecretContainer() {
     return document.getElementById("create-secret");
   }
 
+  /**
+   * @returns {HTMLElement | null} The reveal secret text element.
+   */
   get revealSecretText() {
     return document.getElementById("revealSecret");
   }
 
+  /**
+   * @returns {HTMLElement | null} The download files element.
+   */
   get downloadFiles() {
     return document.getElementById("download-files");
   }
 
+  /**
+   * @returns {HTMLElement | null} The download files container element.
+   */
   get downloadFilesContainer() {
     return document.getElementById("download-files-container");
   }
 
+  /**
+   * Displays the new secret creation view.
+   */
   displayNewSecret() {
     this.hideAll();
     this.createSecretContainer.style.display = "block";
   }
 
+  /**
+   * Displays a secret by its ID.
+   * @param {string} id - The ID of the secret to display.
+   */
   displaySecret(id) {
     this.hideAll();
     this.readSecretContent.value = `Your secret will appear here`;
@@ -216,6 +267,9 @@ class SecretManager {
     this.error.style.display = "block";
   }
 
+  /**
+   * Hides all main content divs.
+   */
   hideAll() {
     const divs = this.mainContainer.querySelectorAll("#create-secret, #read-secret, #error");
     divs.forEach(div => {
@@ -223,6 +277,11 @@ class SecretManager {
     });
   }
 
+  /**
+   * Creates a new secret.
+   * @param {string} content - The content of the secret.
+   * @param {number} expiresIn - The expiration time in seconds.
+   */
   createSecret(content, expiresIn) {
     const data = JSON.stringify({
       "content": content,
@@ -265,14 +324,71 @@ if (params.id) {
 }
 
 
-let updateSaveButton = function (el) {
+/**
+ * Updates the save button's disabled state based on the input element's value.
+ * @param {HTMLInputElement} el - The input element to check.
+ */
+function updateSaveButton(el) {
   document.getElementById("save").disabled = el.value.trim() === "";
-};
+}
+
+/**
+ * Generates an SVG element with the specified icon.
+ * @param {string} icon - The name of the icon to use from feather-sprite.svg.
+ * @returns {string} The svg element, as a string.
+ */
+function createFeatherIcon(icon) {
+  return `<svg class="feather"><use href="feather-sprite.svg#${icon}" /></svg>`;
+}
+
+/**
+ * Makes an XMLHttpRequest.
+ * @param {string} type - The HTTP method (e.g., "GET", "POST").
+ * @param {string} url - The URL to request.
+ * @param {string | FormData | null} data - The data to send with the request.
+ * @param {function(number, string): void} fn - The callback function to execute when the request is done.
+ */
+function doCall(type, url, data, fn) {
+  const xhr = new XMLHttpRequest();
+  xhr.withCredentials = true;
+
+  xhr.addEventListener("readystatechange", function () {
+    if (this.readyState === this.DONE) {
+      fn(this.status, this.responseText);
+    }
+  });
+
+  xhr.open(type, url);
+  xhr.setRequestHeader("Cache-Control", "no-cache, no-store, max-age=0");
+
+  if (data) {
+    const files = document.getElementById("files").files;
+    const formData = new FormData();
+    formData.append("data", data);
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    xhr.send(formData);
+  } else {
+    xhr.send();
+  }
+}
 
 try {
   // Handle URL box interactions
   let urlBox = document.getElementById("share-url");
   let copySuccess = document.getElementById("copy-success");
+
+  /**
+   * Shows a success message when text is copied to the clipboard.
+   */
+  function showCopySuccess() {
+    copySuccess.classList.add("visible");
+    setTimeout(() => {
+      copySuccess.classList.remove("visible");
+    }, 2000);
+  }
 
   urlBox.addEventListener("click", function () {
     urlBox.focus();
@@ -295,13 +411,6 @@ try {
       showCopySuccess();
     }
   });
-
-  function showCopySuccess() {
-    copySuccess.classList.add("visible");
-    setTimeout(() => {
-      copySuccess.classList.remove("visible");
-    }, 2000);
-  }
 
   // Create secret button
   document.getElementById("save").addEventListener("click", function () {
@@ -331,31 +440,4 @@ try {
   }, false);
 } catch (error) {
   console.error("Error setting up event handlers:", error);
-}
-
-function doCall(type, url, data, fn) {
-  const xhr = new XMLHttpRequest();
-  xhr.withCredentials = true;
-
-  xhr.addEventListener("readystatechange", function () {
-    if (this.readyState === this.DONE) {
-      fn(this.status, this.responseText);
-    }
-  });
-
-  xhr.open(type, url);
-  xhr.setRequestHeader("Cache-Control", "no-cache, no-store, max-age=0");
-
-  if (data) {
-    const files = document.getElementById("files").files;
-    const formData = new FormData();
-    formData.append("data", data);
-    for (const file of files) {
-      formData.append("files", file);
-    }
-
-    xhr.send(formData);
-  } else {
-    xhr.send();
-  }
 }
