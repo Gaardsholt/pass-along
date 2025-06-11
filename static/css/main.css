@@ -34,6 +34,8 @@
   --shadow-lg: 0 0 25px rgba(0, 0, 0, 0.3);
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --blurred: 0 0 6px white;
 }
 
 html {
@@ -431,13 +433,15 @@ textarea.input {
 }
 
 .blurred {
-  filter: blur(4px);
+  text-shadow: var(--blurred);
+  color: transparent;
   transition: var(--transition);
 }
 
 .blurred.active,
 #secret-content:focus {
-  filter: blur(0px);
+  text-shadow: 0 0 0 white;
+}
 }
 
 .position-relative {
