@@ -232,7 +232,7 @@ class SecretManager {
   }
 
   hideAll() {
-    const divs = this.mainContainer.querySelectorAll("#create-secret, #read-secret, #not-found");
+    const divs = this.mainContainer.querySelectorAll("#create-secret, #read-secret, #error");
     divs.forEach(div => {
       div.style.display = "none";
     });
