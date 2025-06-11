@@ -38,26 +38,20 @@ class SecretManager {
     const classKeepBlurred = "keep-blurred-on-focus";
 
     if (this.secretContent && this.keepBlurredToggle) {
-      const savedPreference = localStorage.getItem(localStorageKey);
-      if (savedPreference === "true") {
-        this.keepBlurredToggle.checked = true;
-        this.secretContent.classList.add(classKeepBlurred);
-      } else {
-        this.keepBlurredToggle.checked = false;
-        this.secretContent.classList.remove(classKeepBlurred);
-      }
+      const shouldKeepBlurred = localStorage.getItem(localStorageKey) === "true";
+
+      this.keepBlurredToggle.checked = shouldKeepBlurred;
+      this.secretContent.classList.toggle(classKeepBlurred, shouldKeepBlurred);
 
       this.keepBlurredToggle.addEventListener("change", () => {
-        if (this.keepBlurredToggle.checked) {
-          this.secretContent.classList.add(classKeepBlurred);
-          localStorage.setItem(localStorageKey, "true");
-        } else {
-          this.secretContent.classList.remove(classKeepBlurred);
-          localStorage.setItem(localStorageKey, "false");
-          // If textarea is currently focused and toggle is unchecked, unblur it
-          if (document.activeElement === this.secretContent) {
-            this.secretContent.classList.remove("blurred");
-          }
+        const isChecked = this.keepBlurredToggle.checked;
+
+        this.secretContent.classList.toggle(classKeepBlurred, isChecked);
+        localStorage.setItem(localStorageKey, isChecked);
+
+        // If textarea is currently focused and toggle is unchecked, unblur it
+        if (!isChecked && document.activeElement === this.secretContent) {
+          this.secretContent.classList.remove("blurred");
         }
       });
 
@@ -175,7 +169,7 @@ class SecretManager {
     this.revealSecretText.addEventListener("click", () => {
       // Add loading state
       this.revealSecretText.innerHTML = '<div class="secret-reveal-text"><span class="secret-reveal-icon"><i data-feather="loader"></i></span><span>Loading...</span></div>';
-      feather.replace();
+      this.initializeFeatherIcons();
 
       doCall("GET", "/api/" + id, null, (status, response) => {
         if (status === 410) {
@@ -210,7 +204,7 @@ class SecretManager {
           }
 
           this.downloadFilesContainer.style.display = "block";
-          feather.replace();
+          this.initializeFeatherIcons
         }
 
         this.revealSecretText.style.display = "none";
@@ -260,7 +254,7 @@ class SecretManager {
       // Reset button state
       const saveButton = document.getElementById("save");
       saveButton.innerHTML = '<span class="button-icon"><i data-feather="check"></i></span><span>Success!</span>';
-      feather.replace();
+      this.initializeFeatherIcons
 
       // Show the share dialog
       document.body.className += ' active';
@@ -326,7 +320,7 @@ try {
     const originalContent = saveButton.innerHTML;
     saveButton.disabled = true;
     saveButton.innerHTML = '<span class="button-icon"><i data-feather="loader"></i></span><span>Creating...</span>';
-    feather.replace();
+    this.initializeFeatherIcons
 
     let content = document.getElementById("secret-content").value;
     let expires_in = parseInt(document.getElementById("valid-for").value);
@@ -338,7 +332,7 @@ try {
       if (saveButton.disabled) {
         saveButton.innerHTML = originalContent;
         saveButton.disabled = false;
-        feather.replace();
+        this.initializeFeatherIcons
       }
     }, 10000);
   }, false);
@@ -380,7 +374,5 @@ function doCall(type, url, data, fn) {
 
 // Initialize feather icons after page load
 document.addEventListener('DOMContentLoaded', function () {
-  if (typeof feather !== 'undefined') {
-    feather.replace();
-  }
+  window.secretManager.initializeFeatherIcons();
 });
