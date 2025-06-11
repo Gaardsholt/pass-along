@@ -21,8 +21,6 @@
   <meta property="twitter:title" content="Pass-along — Send secrets, securely">
   <meta property="twitter:description" content="This service allows you to share your secrets, passwords or anything you like, securely">
 
-  <!-- Feather Icons -->
-  <script src="https://unpkg.com/feather-icons"></script>
   <link rel="stylesheet" href="/css/main.css" />
 </head>
 
@@ -53,7 +51,7 @@
 
         <div class="file-input-container">
           <label class="file-input-label" for="files">
-            <span class="file-input-icon"><i data-feather="upload-cloud"></i></span>
+            <span class="file-input-icon"><svg class="feather"><use href="feather-sprite.svg#upload-cloud" /></svg></span>
             <span class="file-input-text">Drop files here or click to browse</span>
           </label>
           <input type="file" id="files" name="files" class="file-input" multiple>
@@ -61,7 +59,7 @@
         </div>
 
         <button id="save" class="button" disabled="true">
-          <span class="button-icon"><i data-feather="lock"></i></span>
+          <span class="button-icon"><svg class="feather"><use href="feather-sprite.svg#lock" /></svg></span>
           <span>Create Secure Link</span>
         </button>
       </div>
@@ -72,7 +70,7 @@
             <textarea name="xyz" class="input blurred" id="read-secret-content" autocomplete="off" readonly></textarea>
             <div id="revealSecret" class="secret-reveal">
               <div class="secret-reveal-text">
-                <span class="secret-reveal-icon"><i data-feather="eye"></i></span>
+                <span class="secret-reveal-icon"><svg class="feather"><use href="feather-sprite.svg#eye" /></svg></span>
                 <span>Click to reveal secret</span>
               </div>
             </div>
@@ -85,7 +83,7 @@
         </div>
 
         <button class="button button-outline" onclick="window.location='/'">
-          <span class="button-icon"><i data-feather="plus"></i></span>
+          <span class="button-icon"><svg class="feather"><use href="feather-sprite.svg#plus" /></svg></span>
           <span>Create New Secret</span>
         </button>
       </div>
@@ -97,7 +95,7 @@
         </div>
 
         <button class="button" onclick="window.location='/'">
-          <span class="button-icon"><i data-feather="plus"></i></span>
+          <span class="button-icon"><svg class="feather"><use href="feather-sprite.svg#plus" /></svg></span>
           <span>Create New Secret</span>
         </button>
       </div>
@@ -112,7 +110,7 @@
       <span id="copy-success" class="copy-success">Copied!</span>
     </div>
     <button id="copy-button" class="button">
-      <span class="button-icon"><i data-feather="clipboard"></i></span>
+      <span class="button-icon"><svg class="feather"><use href="feather-sprite.svg#clipboard" /></svg></span>
       <span>Copy Link</span>
     </button>
   </div>
