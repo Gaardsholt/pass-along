@@ -12,20 +12,14 @@
   --primary-dark: #00cc88;
   --primary-light: rgba(0, 255, 170, 0.15);
 
-  --accent: #4c00ff;
-  --accent-light: rgba(76, 0, 255, 0.15);
-
   --dark: #121212;
-  --gray-100: #2a2a2a;
   --gray-200: #333333;
   --gray-300: #444444;
   --gray-400: #666666;
   --gray-500: #888888;
-  --gray-700: #b3b3b3;
 
   --danger: #ff2d55;
   --success: #00ff99;
-  --warning: #ffcc00;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
