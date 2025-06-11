@@ -445,6 +445,7 @@ textarea.input {
 
 #secret-content.keep-blurred-on-focus:focus {
   text-shadow: var(--blurred);
+  transition: none;
 }
 
 #secret-content:placeholder-shown,
