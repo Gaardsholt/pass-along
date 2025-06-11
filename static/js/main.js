@@ -3,6 +3,7 @@ class SecretManager {
     this.initializeFeatherIcons();
     this.initializeValidForOptions();
     this.initializeFileInput();
+    this.initializeBlurToggle();
   }
 
   initializeFeatherIcons() {
@@ -30,6 +31,47 @@ class SecretManager {
         validForElement.appendChild(opt);
       }
     });
+  }
+
+  initializeBlurToggle() {
+    const localStorageKey = "keepBlurredOnFocus";
+    const classKeepBlurred = "keep-blurred-on-focus";
+
+    if (this.secretContent && this.keepBlurredToggle) {
+      const savedPreference = localStorage.getItem(localStorageKey);
+      if (savedPreference === "true") {
+        this.keepBlurredToggle.checked = true;
+        this.secretContent.classList.add(classKeepBlurred);
+      } else {
+        this.keepBlurredToggle.checked = false;
+        this.secretContent.classList.remove(classKeepBlurred);
+      }
+
+      this.keepBlurredToggle.addEventListener("change", () => {
+        if (this.keepBlurredToggle.checked) {
+          this.secretContent.classList.add(classKeepBlurred);
+          localStorage.setItem(localStorageKey, "true");
+        } else {
+          this.secretContent.classList.remove(classKeepBlurred);
+          localStorage.setItem(localStorageKey, "false");
+          // If textarea is currently focused and toggle is unchecked, unblur it
+          if (document.activeElement === this.secretContent) {
+            this.secretContent.classList.remove("blurred");
+          }
+        }
+      });
+
+      this.secretContent.addEventListener("focus", () => {
+        if (!this.keepBlurredToggle.checked) {
+          this.secretContent.classList.remove("blurred");
+        }
+      });
+
+      this.secretContent.addEventListener("blur", () => {
+        // Always add blurred class on blur, the focus listener will remove it if needed.
+        this.secretContent.classList.add("blurred");
+      });
+    }
   }
 
   initializeFileInput() {
@@ -86,6 +128,10 @@ class SecretManager {
 
   get secretContent() {
     return document.getElementById("secret-content");
+  }
+
+  get keepBlurredToggle() {
+    return document.getElementById("keep-blurred-toggle");
   }
 
   get readSecretContainer() {

@@ -442,6 +442,14 @@ textarea.input {
 #secret-content:focus {
   text-shadow: 0 0 0 white;
 }
+
+#secret-content.keep-blurred-on-focus:focus {
+  text-shadow: var(--blurred);
+}
+
+#secret-content:placeholder-shown,
+#secret-content.keep-blurred-on-focus:focus:placeholder-shown {
+  text-shadow: 0 0 0 white;
 }
 
 .position-relative {
@@ -497,4 +505,57 @@ textarea.input {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.toggle-input {
+  display: none;
+}
+
+.toggle-label {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  position: relative;
+  padding-left: 2rem;
+  user-select: none;
+}
+
+.toggle-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 0.75rem;
+  background-color: var(--gray-300);
+  border-radius: 0.375rem;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-label::after {
+  content: "";
+  position: absolute;
+  left: 0.125rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-input:checked + .toggle-label::before {
+  background-color: var(--primary);
+}
+
+.toggle-input:checked + .toggle-label::after {
+  transform: translate(0.75rem, -50%);
 }
