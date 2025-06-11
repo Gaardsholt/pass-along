@@ -1,17 +1,10 @@
 class SecretManager {
   constructor() {
-    this.initializeFeatherIcons();
     this.initializeValidForOptions();
     this.initializeFileInput();
     this.initializeBlurToggle();
   }
 
-  initializeFeatherIcons() {
-    // Initialize feather icons
-    if (typeof feather !== 'undefined') {
-      feather.replace();
-    }
-  }
 
   initializeValidForOptions() {
     // Get expiration options from API
@@ -168,8 +161,7 @@ class SecretManager {
 
     this.revealSecretText.addEventListener("click", () => {
       // Add loading state
-      this.revealSecretText.innerHTML = '<div class="secret-reveal-text"><span class="secret-reveal-icon"><i data-feather="loader"></i></span><span>Loading...</span></div>';
-      this.initializeFeatherIcons();
+      this.revealSecretText.innerHTML = `<div class="secret-reveal-text"><span class="secret-reveal-icon">${createFeatherIcon("loader")}</span><span>Loading...</span></div>`;
 
       doCall("GET", "/api/" + id, null, (status, response) => {
         if (status === 410) {
@@ -196,7 +188,7 @@ class SecretManager {
             downloadItem.href = "data:text/plain;base64," + value;
             downloadItem.download = key;
             downloadItem.innerHTML = `
-              <span class="download-icon"><i data-feather="download"></i></span>
+              <span class="download-icon">${createFeatherIcon("download")}</span>
               <span>${key}</span>
             `;
 
@@ -204,7 +196,6 @@ class SecretManager {
           }
 
           this.downloadFilesContainer.style.display = "block";
-          this.initializeFeatherIcons();
         }
 
         this.revealSecretText.style.display = "none";
@@ -253,8 +244,7 @@ class SecretManager {
 
       // Reset button state
       const saveButton = document.getElementById("save");
-      saveButton.innerHTML = '<span class="button-icon"><i data-feather="check"></i></span><span>Success!</span>';
-      this.initializeFeatherIcons();
+      saveButton.innerHTML = `<span class="button-icon">${createFeatherIcon("check")}</span><span>Success!</span>`;
 
       // Show the share dialog
       document.body.className += ' active';
@@ -319,8 +309,7 @@ try {
     const saveButton = document.getElementById("save");
     const originalContent = saveButton.innerHTML;
     saveButton.disabled = true;
-    saveButton.innerHTML = '<span class="button-icon"><i data-feather="loader"></i></span><span>Creating...</span>';
-    window.secretManager.initializeFeatherIcons();
+    saveButton.innerHTML = `<span class="button-icon">${createFeatherIcon("loader")}</span><span>Creating...</span>`;
 
     let content = document.getElementById("secret-content").value;
     let expires_in = parseInt(document.getElementById("valid-for").value);
@@ -332,7 +321,6 @@ try {
       if (saveButton.disabled) {
         saveButton.innerHTML = originalContent;
         saveButton.disabled = false;
-        window.secretManager.initializeFeatherIcons();
       }
     }, 10000);
   }, false);
@@ -371,8 +359,3 @@ function doCall(type, url, data, fn) {
     xhr.send();
   }
 }
-
-// Initialize feather icons after page load
-document.addEventListener('DOMContentLoaded', function () {
-  window.secretManager.initializeFeatherIcons();
-});
