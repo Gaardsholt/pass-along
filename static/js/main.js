@@ -144,8 +144,8 @@ class SecretManager {
 
       const cleanup = () => {
         document.body.classList.remove("active-modal");
-        overwriteButton.onclick = null;
-        skipButton.onclick = null;
+        overwriteButton.removeEventListener('click', overwriteButton.onclick);
+        skipButton.removeEventListener('click', skipButton.onclick);
       };
 
       overwriteButton.onclick = () => {
