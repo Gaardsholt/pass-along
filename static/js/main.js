@@ -1,6 +1,6 @@
 class SecretManager {
   constructor() {
-    this.cachedFiles = new DataTransfer();
+    this.filesToUpload = [];
     this.initializeValidForOptions();
     this.initializeFileInput();
     this.initializeBlurToggle();
@@ -72,90 +72,139 @@ class SecretManager {
    * Initializes the file input handling.
    */
   initializeFileInput() {
-    // Handle file input changes
     const fileInput = document.getElementById("files");
-    const fileList = document.getElementById("file-list");
     const fileInputContainer = document.querySelector(".file-input-container");
 
-    if (fileInput) {
+    if (fileInput && fileInputContainer) {
       fileInput.addEventListener("change", (e) => {
-        const newFiles = e.target.files;
-        const combined = new DataTransfer();
-        const names = new Set();
-
-        for (const f of this.cachedFiles.files) {
-          combined.items.add(f);
-          names.add(f.name);
-        }
-
-        for (const f of newFiles) {
-          if (!names.has(f.name)) {
-            combined.items.add(f);
-            names.add(f.name);
-          }
-        }
-
-        fileInput.files = combined.files;
-        this.cachedFiles = combined;
-
-        fileList.innerHTML = ""; // Clear the list
-        const files = e.target.files;
-
-        if (files.length > 0) {
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const fileSize = this.formatFileSize(file.size);
-
-            const li = document.createElement("li");
-            li.className = "file-item";
-            const fileNameDiv = document.createElement("div");
-            fileNameDiv.className = "file-name";
-            fileNameDiv.textContent = file.name;
-
-            const fileSizeDiv = document.createElement("div");
-            fileSizeDiv.className = "file-size";
-            fileSizeDiv.textContent = fileSize;
-
-            const fileContainerDiv = document.createElement("div");
-            fileContainerDiv.appendChild(fileNameDiv);
-            fileContainerDiv.appendChild(fileSizeDiv);
-
-            li.appendChild(fileContainerDiv);
-
-            const removeButton = document.createElement("button");
-            removeButton.className = "remove-file-button";
-            removeButton.innerHTML = createFeatherIcon("x");
-            removeButton.title = `Remove ${file.name}`;
-            removeButton.setAttribute("aria-label", `Remove ${file.name}`);
-            removeButton.addEventListener("click", (event) => {
-              event.preventDefault();
-              this.removeFile(file.name);
-            });
-            li.appendChild(removeButton);
-
-            fileList.appendChild(li);
-          }
-        }
+        this.addFiles(e.target.files);
+        e.target.value = ""; // Reset file input to allow selecting the same file again
       });
-    }
 
-    if (fileInputContainer) {
-      fileInputContainer.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        fileInputContainer.classList.add("drag-over");
-      }, false);
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        fileInputContainer.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
 
-      fileInputContainer.addEventListener("dragleave", () => {
-        fileInputContainer.classList.remove("drag-over");
-      }, false);
+      ["dragenter", "dragover"].forEach((eventName) => {
+        fileInputContainer.addEventListener(eventName, () => {
+          fileInputContainer.classList.add("drag-over");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        fileInputContainer.addEventListener(eventName, () => {
+          fileInputContainer.classList.remove("drag-over");
+        });
+      });
 
       fileInputContainer.addEventListener("drop", (e) => {
-        e.preventDefault();
-        fileInputContainer.classList.remove("drag-over");
+        this.addFiles(e.dataTransfer.files);
+      });
+    }
+  }
 
-        fileInput.files = e.dataTransfer.files;
-        fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
-      }, false);
+  /**
+   * Adds files to the upload list.
+   * @param {FileList} newFiles - The files to add.
+   */
+  async addFiles(newFiles) {
+    for (const file of newFiles) {
+      const existingFileIndex = this.filesToUpload.findIndex((f) => f.name === file.name);
+
+      if (existingFileIndex !== -1) {
+        const shouldOverwrite = await this.showOverwriteModal(file);
+        if (shouldOverwrite) {
+          const index = this.filesToUpload.findIndex((f) => f.name === file.name);
+          if (index !== -1) {
+            this.filesToUpload[index] = file;
+          }
+        }
+      } else {
+        this.filesToUpload.push(file);
+      }
+    }
+    this.updateFileList();
+  }
+
+  /**
+   * Shows the file overwrite confirmation modal.
+   * @param {File} file - The file that may overwrite an existing one.
+   * @returns {Promise<boolean>}
+   */
+  showOverwriteModal(file) {
+    return new Promise((resolve) => {
+      const duplicateFileName = document.getElementById("duplicate-file-name");
+      const overwriteButton = document.getElementById("overwrite-file-button");
+      const skipButton = document.getElementById("skip-file-button");
+
+      duplicateFileName.textContent = file.name;
+      document.body.classList.add("active-modal");
+
+      const cleanup = () => {
+        document.body.classList.remove("active-modal");
+        overwriteButton.onclick = null;
+        skipButton.onclick = null;
+      };
+
+      overwriteButton.onclick = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      skipButton.onclick = () => {
+        cleanup();
+        resolve(false);
+      };
+    });
+  }
+
+  /**
+   * Removes a file from the upload list.
+   * @param {string} fileName - The name of the file to remove.
+   */
+  removeFile(fileName) {
+    this.filesToUpload = this.filesToUpload.filter((f) => f.name !== fileName);
+    this.updateFileList();
+  }
+
+  /**
+   * Updates the visual list of files to be uploaded.
+   */
+  updateFileList() {
+    const fileList = document.getElementById("file-list");
+    fileList.innerHTML = ""; // Clear the list
+
+    for (const file of this.filesToUpload) {
+      const fileSize = this.formatFileSize(file.size);
+
+      const li = document.createElement("li");
+      li.className = "file-item";
+
+      const fileNameDiv = document.createElement("div");
+      fileNameDiv.className = "file-name";
+      fileNameDiv.textContent = file.name;
+
+      const fileSizeDiv = document.createElement("div");
+      fileSizeDiv.className = "file-size";
+      fileSizeDiv.textContent = fileSize;
+
+      const fileInfoContainer = document.createElement("div");
+      fileInfoContainer.style.overflow = "hidden";
+      fileInfoContainer.appendChild(fileNameDiv);
+      fileInfoContainer.appendChild(fileSizeDiv);
+
+      const removeButton = document.createElement("button");
+      removeButton.className = "remove-file-button";
+      removeButton.innerHTML = createFeatherIcon("x");
+      removeButton.onclick = () => this.removeFile(file.name);
+
+      li.appendChild(fileInfoContainer);
+      li.appendChild(removeButton);
+
+      fileList.appendChild(li);
     }
   }
 
@@ -172,25 +221,6 @@ class SecretManager {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  /**
-   * Removes a file from the file input list by its name.
-   * @param {string} name - The name of the file to remove.
-   */
-  removeFile(name) {
-    const fileInput = document.getElementById("files");
-    const dt = new DataTransfer();
-
-    for (let i = 0; i < this.cachedFiles.files.length; i++) {
-      if (this.cachedFiles.files[i].name !== name) {
-        dt.items.add(this.cachedFiles.files[i]);
-      }
-    }
-
-    this.cachedFiles = dt;
-    fileInput.files = dt.files;
-    fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
   /**
@@ -382,7 +412,6 @@ class SecretManager {
 }
 window.secretManager = new SecretManager();
 
-
 const params = new Proxy(new URLSearchParams(window.location.search), {
   get: (searchParams, prop) => searchParams.get(prop),
 });
@@ -432,7 +461,7 @@ function doCall(type, url, data, fn) {
   xhr.setRequestHeader("Cache-Control", "no-cache, no-store, max-age=0");
 
   if (data) {
-    const files = document.getElementById("files").files;
+    const files = window.secretManager.filesToUpload;
     const formData = new FormData();
     formData.append("data", data);
     for (const file of files) {

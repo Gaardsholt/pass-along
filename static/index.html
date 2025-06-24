@@ -117,6 +117,17 @@
 
   <div id="overlay" class="overlay"></div>
 
+  <div id="file-overwrite-modal" class="modal-container">
+    <div class="modal-content">
+      <h2>File Already Exists</h2>
+      <p>A file named "<span id="duplicate-file-name"></span>" already exists. Do you want to overwrite it?</p>
+      <div class="modal-buttons">
+        <button id="overwrite-file-button" class="button">Overwrite</button>
+        <button id="skip-file-button" class="button button-outline">Skip</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/main.js"></script>
 </body>
 
