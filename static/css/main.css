@@ -233,6 +233,11 @@ textarea.input {
   opacity: 1;
 }
 
+.active-modal .overlay {
+  visibility: visible;
+  opacity: 1;
+}
+
 #share-url-container {
   z-index: 200;
   padding: 2rem;
@@ -290,6 +295,51 @@ textarea.input {
   transform: translateY(0) scale(1);
 }
 
+#file-overwrite-modal {
+  z-index: 200;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  max-width: 400px;
+  background-color: var(--bg-card);
+  border-radius: 0;
+  transform: translate(-50%, -50%) scale(0.95);
+  opacity: 0;
+  transition: var(--transition);
+  visibility: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-200);
+}
+
+.active-modal #file-overwrite-modal {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#file-overwrite-modal .modal-content {
+  padding: 1.5rem;
+}
+
+#file-overwrite-modal h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#file-overwrite-modal p {
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+}
+
+#file-overwrite-modal .modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 @media only screen and (max-width: 580px) {
   #main {
     width: 100%;
@@ -341,7 +391,8 @@ textarea.input {
   transition: var(--transition);
 }
 
-.file-input-label:hover {
+.file-input-label:hover,
+.file-input-container.drag-over .file-input-label {
   border-color: var(--primary);
   background-color: var(--primary-light);
 }
@@ -389,6 +440,24 @@ textarea.input {
 .file-size {
   font-size: 0.75rem;
   color: var(--text-tertiary);
+}
+
+.remove-file-button {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.remove-file-button:hover {
+  background-color: var(--danger);
+  color: var(--text-primary);
 }
 
 .card {
