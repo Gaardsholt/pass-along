@@ -102,7 +102,7 @@ class SecretManager {
 
             li.appendChild(fileContainerDiv);
 
-removeButton.setAttribute("aria-label", `Remove ${file.name}`);
+            removeButton.setAttribute("aria-label", `Remove ${file.name}`);
             removeButton.addEventListener("click", (event) => {
               event.preventDefault();
               this.removeFile(file.name);
@@ -166,6 +166,10 @@ removeButton.setAttribute("aria-label", `Remove ${file.name}`);
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  /**
+   * Removes a file from the file input list by its name.
+   * @param {string} name - The name of the file to remove.
+   */
   removeFile(name) {
     const fileInput = document.getElementById("files");
     const files = fileInput.files;
