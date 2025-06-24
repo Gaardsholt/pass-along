@@ -102,10 +102,7 @@ class SecretManager {
 
             li.appendChild(fileContainerDiv);
 
-            const removeButton = document.createElement("button");
-            removeButton.className = "remove-file-button";
-            removeButton.innerHTML = createFeatherIcon("x");
-            removeButton.title = `Remove ${file.name}`;
+removeButton.setAttribute("aria-label", `Remove ${file.name}`);
             removeButton.addEventListener("click", (event) => {
               event.preventDefault();
               this.removeFile(file.name);
