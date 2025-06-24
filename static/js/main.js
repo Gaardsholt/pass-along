@@ -117,9 +117,8 @@ class SecretManager {
       if (existingFileIndex !== -1) {
         const shouldOverwrite = await this.showOverwriteModal(file);
         if (shouldOverwrite) {
-          const index = this.filesToUpload.findIndex((f) => f.name === file.name);
-          if (index !== -1) {
-            this.filesToUpload[index] = file;
+          if (existingFileIndex !== -1) {
+            this.filesToUpload[existingFileIndex] = file;
           }
         }
       } else {
