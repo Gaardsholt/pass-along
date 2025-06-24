@@ -1,5 +1,6 @@
 class SecretManager {
   constructor() {
+    this.cachedFiles = new DataTransfer();
     this.initializeValidForOptions();
     this.initializeFileInput();
     this.initializeBlurToggle();
@@ -78,6 +79,25 @@ class SecretManager {
 
     if (fileInput) {
       fileInput.addEventListener("change", (e) => {
+        const newFiles = e.target.files;
+        const combined = new DataTransfer();
+        const names = new Set();
+
+        for (const f of this.cachedFiles.files) {
+          combined.items.add(f);
+          names.add(f.name);
+        }
+
+        for (const f of newFiles) {
+          if (!names.has(f.name)) {
+            combined.items.add(f);
+            names.add(f.name);
+          }
+        }
+
+        fileInput.files = combined.files;
+        this.cachedFiles = combined;
+
         fileList.innerHTML = ""; // Clear the list
         const files = e.target.files;
 
@@ -102,6 +122,10 @@ class SecretManager {
 
             li.appendChild(fileContainerDiv);
 
+            const removeButton = document.createElement("button");
+            removeButton.className = "remove-file-button";
+            removeButton.innerHTML = createFeatherIcon("x");
+            removeButton.title = `Remove ${file.name}`;
             removeButton.setAttribute("aria-label", `Remove ${file.name}`);
             removeButton.addEventListener("click", (event) => {
               event.preventDefault();
@@ -129,23 +153,7 @@ class SecretManager {
         e.preventDefault();
         fileInputContainer.classList.remove("drag-over");
 
-        const dataTransfer = new DataTransfer();
-        const existingFileNames = new Set();
-
-        for (const file of fileInput.files) {
-          dataTransfer.items.add(file);
-          existingFileNames.add(file.name);
-        }
-
-        for (const file of e.dataTransfer.files) {
-          if (!existingFileNames.has(file.name)) {
-            dataTransfer.items.add(file);
-            existingFileNames.add(file.name);
-          }
-        }
-
-        fileInput.files = dataTransfer.files;
-
+        fileInput.files = e.dataTransfer.files;
         fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
       }, false);
     }
@@ -172,15 +180,15 @@ class SecretManager {
    */
   removeFile(name) {
     const fileInput = document.getElementById("files");
-    const files = fileInput.files;
     const dt = new DataTransfer();
 
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].name !== name) {
-        dt.items.add(files[i]);
+    for (let i = 0; i < this.cachedFiles.files.length; i++) {
+      if (this.cachedFiles.files[i].name !== name) {
+        dt.items.add(this.cachedFiles.files[i]);
       }
     }
 
+    this.cachedFiles = dt;
     fileInput.files = dt.files;
     fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
