@@ -74,6 +74,7 @@ class SecretManager {
     // Handle file input changes
     const fileInput = document.getElementById("files");
     const fileList = document.getElementById("file-list");
+    const fileInputContainer = document.querySelector(".file-input-container");
 
     if (fileInput) {
       fileInput.addEventListener("change", (e) => {
@@ -101,10 +102,55 @@ class SecretManager {
 
             li.appendChild(fileContainerDiv);
 
+            const removeButton = document.createElement("button");
+            removeButton.className = "remove-file-button";
+            removeButton.innerHTML = createFeatherIcon("x");
+            removeButton.title = `Remove ${file.name}`;
+            removeButton.addEventListener("click", (event) => {
+              event.preventDefault();
+              this.removeFile(file.name);
+            });
+            li.appendChild(removeButton);
+
             fileList.appendChild(li);
           }
         }
       });
+    }
+
+    if (fileInputContainer) {
+      fileInputContainer.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        fileInputContainer.classList.add("drag-over");
+      }, false);
+
+      fileInputContainer.addEventListener("dragleave", () => {
+        fileInputContainer.classList.remove("drag-over");
+      }, false);
+
+      fileInputContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        fileInputContainer.classList.remove("drag-over");
+
+        const dataTransfer = new DataTransfer();
+        const existingFileNames = new Set();
+
+        for (const file of fileInput.files) {
+          dataTransfer.items.add(file);
+          existingFileNames.add(file.name);
+        }
+
+        for (const file of e.dataTransfer.files) {
+          if (!existingFileNames.has(file.name)) {
+            dataTransfer.items.add(file);
+            existingFileNames.add(file.name);
+          }
+        }
+
+        fileInput.files = dataTransfer.files;
+
+        fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
+      }, false);
     }
   }
 
@@ -121,6 +167,21 @@ class SecretManager {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  removeFile(name) {
+    const fileInput = document.getElementById("files");
+    const files = fileInput.files;
+    const dt = new DataTransfer();
+
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].name !== name) {
+        dt.items.add(files[i]);
+      }
+    }
+
+    fileInput.files = dt.files;
+    fileInput.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
   /**
