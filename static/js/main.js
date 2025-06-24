@@ -199,7 +199,7 @@ class SecretManager {
       const removeButton = document.createElement("button");
       removeButton.className = "remove-file-button";
       removeButton.innerHTML = createFeatherIcon("x");
-      removeButton.onclick = () => this.removeFile(file.name);
+      removeButton.addEventListener('click', () => this.removeFile(file.name));
 
       li.appendChild(fileInfoContainer);
       li.appendChild(removeButton);
