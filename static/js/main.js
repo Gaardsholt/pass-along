@@ -142,21 +142,24 @@ class SecretManager {
       duplicateFileName.textContent = file.name;
       document.body.classList.add("active-modal");
 
-      const cleanup = () => {
-        document.body.classList.remove("active-modal");
-        overwriteButton.removeEventListener('click', overwriteButton.onclick);
-        skipButton.removeEventListener('click', skipButton.onclick);
-      };
-
-      overwriteButton.onclick = () => {
+      const handleOverwriteClick = () => {
         cleanup();
         resolve(true);
       };
 
-      skipButton.onclick = () => {
+      const handleSkipClick = () => {
         cleanup();
         resolve(false);
       };
+
+      const cleanup = () => {
+        document.body.classList.remove("active-modal");
+        overwriteButton.removeEventListener('click', handleOverwriteClick);
+        skipButton.removeEventListener('click', handleSkipClick);
+      };
+
+      overwriteButton.addEventListener('click', handleOverwriteClick);
+      skipButton.addEventListener('click', handleSkipClick);
     });
   }
 
