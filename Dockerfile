@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s"
 
-FROM alpine:3.22.0
+FROM alpine:3.22.1
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 appgroup && \
