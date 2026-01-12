@@ -3,6 +3,7 @@
 
 # Version control files
 .git/
+.github/
 .gitignore
 # .dockerignore # This file itself. Usually not needed to ignore.
 # Dockerfile # If your Dockerfile is in the context and you don't want it in the image.
