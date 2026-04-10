@@ -2,9 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/netip"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +30,7 @@ const (
 
 var secretStore datastore.SecretStore
 var lock = sync.RWMutex{}
+var limiter = newRateLimiter()
 
 // StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
@@ -49,6 +54,8 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
+	external.Use(securityHeadersMiddleware)
+	external.Use(rateLimitMiddleware)
 	external.HandleFunc("/api", NewHandler).Methods("POST")
 	external.HandleFunc("/api/valid-for-options", ValidForHandler).Methods("GET")
 	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
@@ -97,18 +104,26 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var entry types.Entry
 
+	setNoStore(w)
+
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		r.Body = http.MaxBytesReader(w, r.Body, int64(config.Config.MaxSecretBytes))
 		err = json.NewDecoder(r.Body).Decode(&entry)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 	} else {
-		err = getFormData(r, &entry)
+		err = getFormData(w, r, &entry)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+	}
+
+	if err := validateEntry(entry); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	log.Debug().Msg("Creating a new secret")
@@ -127,27 +142,35 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		UnlimitedViews: entry.UnlimitedViews,
 	}
 	mySecret.UnlimitedViews = entry.UnlimitedViews
-	id := mySecret.GenerateID()
-
-	encryptedSecret, err := mySecret.Encrypt(id)
+	lookupID, accessKey, token, err := types.GenerateToken()
 	if err != nil {
 		go metrics.SecretsCreatedWithError.Inc()
+		writeError(w, http.StatusInternalServerError, "failed to create secret")
 		return
 	}
 
-	err = secretStore.Add(id, encryptedSecret, entry.ExpiresIn)
+	encryptedSecret, err := mySecret.Encrypt(accessKey)
 	if err != nil {
-		http.Error(w, "failed to add secret, please try again", http.StatusInternalServerError)
+		go metrics.SecretsCreatedWithError.Inc()
+		writeError(w, http.StatusInternalServerError, "failed to create secret")
+		return
+	}
+
+	err = secretStore.Add(lookupID, encryptedSecret, entry.ExpiresIn)
+	if err != nil {
+		go metrics.SecretsCreatedWithError.Inc()
+		writeError(w, http.StatusInternalServerError, "failed to add secret, please try again")
 		log.Error().Err(err).Msg("Unable to add secret")
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "%s", id)
+	fmt.Fprintf(w, "%s", token)
 }
 
 // ValidForHandler returns the options you can choose in "Valid for" field
 func ValidForHandler(w http.ResponseWriter, r *http.Request) {
+	setNoStore(w)
 	options := map[int]string{}
 
 	for _, v := range config.Config.ValidForOptions {
@@ -194,21 +217,29 @@ func humanDuration(duration int) string {
 
 // GetHandler retrieves a secret in the secret store
 func GetHandler(w http.ResponseWriter, r *http.Request) {
+	setNoStore(w)
 	vars := mux.Vars(r)
 
-	id := vars["id"]
-	secretData, gotData := secretStore.Get(id)
+	token := vars["id"]
+	lookupID, accessKey, err := types.ParseToken(token)
+	if err != nil {
+		w.WriteHeader(http.StatusGone)
+		fmt.Fprint(w, "secret not found")
+		return
+	}
+
+	secretData, gotData := secretStore.Get(lookupID)
 	if !gotData {
 		w.WriteHeader(http.StatusGone)
 		fmt.Fprint(w, "secret not found")
 		return
 	}
 
-	s, err := types.Decrypt(secretData, id)
+	s, err := types.Decrypt(secretData, accessKey)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Unable to decrypt secret")
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+		log.Warn().Err(err).Msg("Unable to decrypt secret")
+		w.WriteHeader(http.StatusGone)
+		fmt.Fprint(w, "secret not found")
 		return
 	}
 
@@ -222,12 +253,16 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isNotExpired || !s.UnlimitedViews {
-		secretStore.Delete(id)
+		secretStore.Delete(lookupID)
 	}
 
 	log.Debug().Msg("Fetching a secret")
 
-	jsonResponse, jsonError := json.Marshal(s)
+	response := map[string]interface{}{
+		"content": s.Content,
+		"files":   s.Files,
+	}
+	jsonResponse, jsonError := json.Marshal(response)
 	if jsonError != nil {
 		fmt.Println("Unable to encode JSON")
 	}
@@ -242,31 +277,51 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "")
 }
 
-func getFormData(r *http.Request, entry *types.Entry) error {
-	r.ParseMultipartForm(32 << 20) // 32 MB
-	mForm := r.MultipartForm
-
-	myData := mForm.Value["data"][0]
-
-	json.Unmarshal([]byte(myData), &entry)
-
-	err := json.Unmarshal([]byte(myData), &entry)
+func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) error {
+	r.Body = http.MaxBytesReader(w, r.Body, config.Config.MaxMultipartBytes)
+	err := r.ParseMultipartForm(config.Config.MaxMultipartBytes)
 	if err != nil {
-		return err
+		return errors.New("invalid multipart form")
+	}
+	mForm := r.MultipartForm
+	if mForm == nil {
+		return errors.New("invalid multipart form")
+	}
+
+	dataValues, ok := mForm.Value["data"]
+	if !ok || len(dataValues) == 0 || strings.TrimSpace(dataValues[0]) == "" {
+		return errors.New("missing data payload")
+	}
+
+	myData := dataValues[0]
+	err = json.Unmarshal([]byte(myData), entry)
+	if err != nil {
+		return errors.New("invalid data payload")
 	}
 
 	filesMap := map[string][]byte{}
+	fileHeaders := mForm.File["files"]
+	if len(fileHeaders) > config.Config.MaxFiles {
+		return errors.New("too many files")
+	}
 
-	for _, fileHeader := range mForm.File["files"] {
+	for _, fileHeader := range fileHeaders {
+		if len(fileHeader.Filename) == 0 || len(fileHeader.Filename) > config.Config.MaxFilenameLength {
+			return errors.New("invalid filename")
+		}
 		file, err := fileHeader.Open()
 		if err != nil {
-			return err
+			return errors.New("unable to read file")
 		}
 		defer file.Close()
 
-		fileBytes, err := io.ReadAll(file)
+		limitedReader := io.LimitReader(file, config.Config.MaxFileSizeBytes+1)
+		fileBytes, err := io.ReadAll(limitedReader)
 		if err != nil {
-			return err
+			return errors.New("unable to read file")
+		}
+		if int64(len(fileBytes)) > config.Config.MaxFileSizeBytes {
+			return errors.New("file too large")
 		}
 		filesMap[fileHeader.Filename] = fileBytes
 	}
@@ -275,4 +330,129 @@ func getFormData(r *http.Request, entry *types.Entry) error {
 		entry.Files = filesMap
 	}
 	return nil
+}
+
+func validateEntry(entry types.Entry) error {
+	if !config.Config.IsValidExpiration(entry.ExpiresIn) {
+		return errors.New("invalid expires_in value")
+	}
+
+	if len(entry.Content) == 0 && len(entry.Files) == 0 {
+		return errors.New("content or files must be provided")
+	}
+
+	if len(entry.Content) > config.Config.MaxSecretBytes {
+		return errors.New("content too large")
+	}
+
+	if len(entry.Files) > config.Config.MaxFiles {
+		return errors.New("too many files")
+	}
+
+	for fileName, content := range entry.Files {
+		if len(fileName) == 0 || len(fileName) > config.Config.MaxFilenameLength {
+			return errors.New("invalid filename")
+		}
+		if int64(len(content)) > config.Config.MaxFileSizeBytes {
+			return errors.New("file too large")
+		}
+	}
+
+	return nil
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+func setNoStore(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-store, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+}
+
+func securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Permissions-Policy", "accelerometer=(),camera=(),geolocation=(),microphone=(),payment=(),usb=()")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'")
+		if config.Config.EnableHSTS && (r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")) {
+			w.Header().Set("Strict-Transport-Security", fmt.Sprintf("max-age=%d; includeSubDomains", config.Config.HSTSMaxAgeSeconds))
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+type requestWindow struct {
+	Start time.Time
+	Count int
+}
+
+type rateLimitStore struct {
+	Lock    sync.Mutex
+	Windows map[string]*requestWindow
+}
+
+func newRateLimiter() *rateLimitStore {
+	return &rateLimitStore{
+		Windows: map[string]*requestWindow{},
+	}
+}
+
+func rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, "/api") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		clientID := getClientIdentifier(r)
+		now := time.Now()
+		windowDuration := time.Duration(config.Config.RateLimitWindowSeconds) * time.Second
+
+		limiter.Lock.Lock()
+		window, exists := limiter.Windows[clientID]
+		if !exists || now.Sub(window.Start) >= windowDuration {
+			limiter.Windows[clientID] = &requestWindow{
+				Start: now,
+				Count: 1,
+			}
+			limiter.Lock.Unlock()
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if window.Count >= config.Config.MaxRequestsPerWindow {
+			limiter.Lock.Unlock()
+			w.Header().Set("Retry-After", strconv.Itoa(config.Config.RateLimitWindowSeconds))
+			writeError(w, http.StatusTooManyRequests, "too many requests")
+			return
+		}
+
+		window.Count++
+		limiter.Lock.Unlock()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func getClientIdentifier(r *http.Request) string {
+	if config.Config.EnableTrustedProxyIP {
+		forwardedFor := strings.TrimSpace(strings.Split(r.Header.Get(config.Config.TrustedProxyHeader), ",")[0])
+		if ip, err := netip.ParseAddr(forwardedFor); err == nil {
+			return ip.String()
+		}
+	}
+
+	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+	if err != nil {
+		host = strings.TrimSpace(r.RemoteAddr)
+	}
+	if ip, err := netip.ParseAddr(host); err == nil {
+		return ip.String()
+	}
+	return "unknown"
 }

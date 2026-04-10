@@ -449,7 +449,6 @@ function createFeatherIcon(icon) {
  */
 function doCall(type, url, data, fn) {
   const xhr = new XMLHttpRequest();
-  xhr.withCredentials = true;
 
   xhr.addEventListener("readystatechange", function () {
     if (this.readyState === this.DONE) {

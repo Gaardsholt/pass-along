@@ -2,11 +2,11 @@ package types
 
 import (
 	"bytes"
-	"crypto/sha512"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/gob"
-	"fmt"
-	"math/rand"
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/Gaardsholt/pass-along/crypto"
@@ -28,11 +28,42 @@ func NewSecret(content string, expires time.Time) Secret {
 	}
 }
 
-func (s Secret) GenerateID() string {
-	random := randomString(30)
-	checksum := sha512.Sum512([]byte(fmt.Sprintf("%v%v", s, random)))
-	hash := base64.RawURLEncoding.EncodeToString(checksum[:])
-	return hash
+func GenerateToken() (lookupID string, accessKey string, token string, err error) {
+	lookupID, err = randomTokenPart(24)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	accessKey, err = randomTokenPart(32)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return lookupID, accessKey, lookupID + "." + accessKey, nil
+}
+
+func ParseToken(token string) (lookupID string, accessKey string, err error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid token format")
+	}
+
+	lookupID = strings.TrimSpace(parts[0])
+	accessKey = strings.TrimSpace(parts[1])
+
+	if lookupID == "" || accessKey == "" {
+		return "", "", errors.New("invalid token values")
+	}
+
+	if _, err = base64.RawURLEncoding.DecodeString(lookupID); err != nil {
+		return "", "", errors.New("invalid lookup id")
+	}
+
+	if _, err = base64.RawURLEncoding.DecodeString(accessKey); err != nil {
+		return "", "", errors.New("invalid access key")
+	}
+
+	return lookupID, accessKey, nil
 }
 
 func (s Secret) Encrypt(encryptionKey string) ([]byte, error) {
@@ -55,9 +86,10 @@ func Decrypt(encryptedData []byte, encryptionKey string) (*Secret, error) {
 	return &secret, nil
 }
 
-func randomString(length int) string {
-	rand.Seed(time.Now().UnixNano())
-	b := make([]byte, length)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)[:length]
+func randomTokenPart(size int) (string, error) {
+	b := make([]byte, size)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }

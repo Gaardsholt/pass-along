@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/Gaardsholt/pass-along/config"
 	"golang.org/x/crypto/pbkdf2"
 )
 
 func deriveKey(passphrase string) []byte {
-	return pbkdf2.Key([]byte(passphrase), []byte(config.Config.ServerSalt), 1000, 32, sha512.New)
+	salt := fmt.Sprintf("pass-along-v2:%s", config.Config.ServerSecret)
+	return pbkdf2.Key([]byte(passphrase), []byte(salt), config.Config.KDFIterations, 32, sha512.New)
 }
 
 func getBytes(key interface{}) ([]byte, error) {

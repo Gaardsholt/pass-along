@@ -7,18 +7,19 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/Gaardsholt/pass-along/metrics"
-	"github.com/Gaardsholt/pass-along/types"
 )
 
 type SecretStore struct {
-	Data map[string][]byte
-	Lock *sync.RWMutex
+	Data    map[string][]byte
+	Expires map[string]time.Time
+	Lock    *sync.RWMutex
 }
 
 func New(lock *sync.RWMutex) (SecretStore, error) {
 	return SecretStore{
-		Data: make(map[string][]byte),
-		Lock: lock,
+		Data:    make(map[string][]byte),
+		Expires: make(map[string]time.Time),
+		Lock:    lock,
 	}, nil
 }
 
@@ -26,6 +27,7 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 	ss.Lock.Lock()
 	defer ss.Lock.Unlock()
 	ss.Data[id] = secret
+	ss.Expires[id] = time.Now().UTC().Add(time.Duration(expiresIn) * time.Second)
 
 	go metrics.SecretsCreated.Inc()
 	return nil
@@ -33,6 +35,12 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 
 func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 	ss.Lock.RLock()
+	expiration, hasExpiration := ss.Expires[id]
+	if hasExpiration && !expiration.After(time.Now().UTC()) {
+		ss.Lock.RUnlock()
+		ss.Delete(id)
+		return nil, false
+	}
 	secret, gotData = ss.Data[id]
 	ss.Lock.RUnlock()
 	return
@@ -43,27 +51,26 @@ func (ss SecretStore) Delete(id string) {
 	defer ss.Lock.Unlock()
 
 	delete(ss.Data, id)
+	delete(ss.Expires, id)
 	go metrics.SecretsDeleted.Inc()
 }
 
 func (ss SecretStore) DeleteExpiredSecrets() {
 	for {
 		time.Sleep(5 * time.Minute)
+		now := time.Now().UTC()
 		ss.Lock.RLock()
-		for k, v := range ss.Data {
-			s, err := types.Decrypt(v, k)
-			if err != nil {
-				continue
-			}
-
-			isNotExpired := s.Expires.UTC().After(time.Now().UTC())
-			if !isNotExpired {
-				log.Debug().Msg("Found expired secret, deleting...")
-				ss.Lock.RUnlock()
-				ss.Delete(k)
-				ss.Lock.RLock()
+		expired := []string{}
+		for k, expiresAt := range ss.Expires {
+			if !expiresAt.After(now) {
+				expired = append(expired, k)
 			}
 		}
 		ss.Lock.RUnlock()
+
+		for _, k := range expired {
+			log.Debug().Msg("Found expired secret, deleting...")
+			ss.Delete(k)
+		}
 	}
 }
