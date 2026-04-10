@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	errServerShuttingDown = "http: Server closed"
+	errServerShuttingDown  = "http: Server closed"
+	untrustedProxyClientID = "untrusted-proxy"
 )
 
 var secretStore datastore.SecretStore
@@ -110,7 +111,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 		r.Body = http.MaxBytesReader(w, r.Body, int64(config.Config.MaxSecretBytes))
 		err = json.NewDecoder(r.Body).Decode(&entry)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body: malformed json")
 			return
 		}
 	} else {
@@ -259,8 +260,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug().Msg("Fetching a secret")
 
 	response := map[string]interface{}{
-		"content": s.Content,
-		"files":   s.Files,
+		"content":         s.Content,
+		"files":           s.Files,
+		"expires":         s.Expires,
+		"unlimited_views": s.UnlimitedViews,
 	}
 	jsonResponse, jsonError := json.Marshal(response)
 	if jsonError != nil {
@@ -281,11 +284,11 @@ func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) err
 	r.Body = http.MaxBytesReader(w, r.Body, config.Config.MaxMultipartBytes)
 	err := r.ParseMultipartForm(config.Config.MaxMultipartBytes)
 	if err != nil {
-		return errors.New("invalid multipart form")
+		return errors.New("failed to parse multipart form")
 	}
 	mForm := r.MultipartForm
 	if mForm == nil {
-		return errors.New("invalid multipart form")
+		return errors.New("multipart form is missing")
 	}
 
 	dataValues, ok := mForm.Value["data"]
@@ -441,10 +444,19 @@ func rateLimitMiddleware(next http.Handler) http.Handler {
 
 func getClientIdentifier(r *http.Request) string {
 	if config.Config.EnableTrustedProxyIP {
-		forwardedFor := strings.TrimSpace(strings.Split(r.Header.Get(config.Config.TrustedProxyHeader), ",")[0])
-		if ip, err := netip.ParseAddr(forwardedFor); err == nil {
+		forwardedForHeader := r.Header.Get(config.Config.TrustedProxyHeader)
+		if strings.TrimSpace(forwardedForHeader) == "" {
+			log.Warn().Msg("trusted proxy mode enabled but proxy header missing")
+			return untrustedProxyClientID
+		}
+
+		forwardedForParts := strings.Split(forwardedForHeader, ",")
+		rightMost := strings.TrimSpace(forwardedForParts[len(forwardedForParts)-1])
+		if ip, err := netip.ParseAddr(rightMost); err == nil {
 			return ip.String()
 		}
+		log.Warn().Msg("trusted proxy mode enabled but proxy header invalid")
+		return untrustedProxyClientID
 	}
 
 	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))

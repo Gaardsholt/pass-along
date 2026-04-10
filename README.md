@@ -102,7 +102,7 @@ curl --request POST \
 
 `expires_in` is number of seconds until it expires.
 
-The reponse will be the ID of your secret, which can be used to fetch it again.
+The response will be the ID of your secret, which can be used to fetch it again.
 
 Note: this returned value is a token containing both lookup identifier and access key.
 
@@ -123,4 +123,3 @@ curl --request GET \
 - Security headers and no-store cache controls are enabled by default.
 - Rotate `SERVER_SECRET` as part of incident response.
 - If a link is leaked, treat the secret as compromised and rotate underlying credentials.
-

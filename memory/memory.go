@@ -34,15 +34,17 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 }
 
 func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
-	ss.Lock.RLock()
+	ss.Lock.Lock()
+	defer ss.Lock.Unlock()
+
 	expiration, hasExpiration := ss.Expires[id]
 	if hasExpiration && !expiration.After(time.Now().UTC()) {
-		ss.Lock.RUnlock()
-		ss.Delete(id)
+		delete(ss.Data, id)
+		delete(ss.Expires, id)
+		go metrics.SecretsDeleted.Inc()
 		return nil, false
 	}
 	secret, gotData = ss.Data[id]
-	ss.Lock.RUnlock()
 	return
 }
 

@@ -57,8 +57,9 @@ func validateConfig() {
 		log.Fatal().Err(nil).Msg("SERVER_SECRET must be at least 32 characters")
 	}
 
-	if Config.KDFIterations < 100000 {
-		log.Fatal().Err(nil).Msg("KDF_ITERATIONS must be >= 100000")
+	// OWASP recommendation baseline for PBKDF2-HMAC-SHA512.
+	if Config.KDFIterations < 600000 {
+		log.Fatal().Err(nil).Msg("KDF_ITERATIONS must be >= 600000")
 	}
 
 	if Config.MaxSecretBytes <= 0 {
@@ -102,10 +103,10 @@ func validateConfig() {
 		if v <= 0 {
 			log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS values must be > 0")
 		}
+		if _, exists := seen[v]; exists {
+			log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS must be unique")
+		}
 		seen[v] = struct{}{}
-	}
-	if len(seen) != len(Config.ValidForOptions) {
-		log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS must be unique")
 	}
 }
 

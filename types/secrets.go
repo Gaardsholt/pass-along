@@ -56,11 +56,11 @@ func ParseToken(token string) (lookupID string, accessKey string, err error) {
 	}
 
 	if _, err = base64.RawURLEncoding.DecodeString(lookupID); err != nil {
-		return "", "", errors.New("invalid lookup id")
+		return "", "", errors.New("lookup id is not valid base64url")
 	}
 
 	if _, err = base64.RawURLEncoding.DecodeString(accessKey); err != nil {
-		return "", "", errors.New("invalid access key")
+		return "", "", errors.New("access key is not valid base64url")
 	}
 
 	return lookupID, accessKey, nil

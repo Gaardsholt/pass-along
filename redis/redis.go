@@ -17,6 +17,8 @@ type SecretStore struct {
 
 var pool *redis.Pool
 
+const logIDPrefixLength = 8
+
 func New() (ss SecretStore, err error) {
 
 	server := config.Config.GetRedisServer()
@@ -80,7 +82,11 @@ func (ss SecretStore) Delete(id string) {
 
 	_, err := conn.Do("DEL", id)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to delete secret")
+		idPrefix := id
+		if len(idPrefix) > logIDPrefixLength {
+			idPrefix = idPrefix[:logIDPrefixLength]
+		}
+		log.Error().Err(err).Str("id_prefix", idPrefix).Msg("Failed to delete secret")
 		return
 	}
 	go metrics.SecretsDeleted.Inc()
