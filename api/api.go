@@ -304,9 +304,6 @@ func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) err
 	}
 
 	for _, fileHeader := range fileHeaders {
-		if len(fileHeader.Filename) == 0 || len(fileHeader.Filename) > config.Config.MaxFilenameLength {
-			return errors.New("invalid filename")
-		}
 		file, err := fileHeader.Open()
 		if err != nil {
 			return errors.New("unable to read file")
@@ -347,10 +344,7 @@ func validateEntry(entry types.Entry) error {
 		return errors.New("too many files")
 	}
 
-	for fileName, content := range entry.Files {
-		if len(fileName) == 0 || len(fileName) > config.Config.MaxFilenameLength {
-			return errors.New("invalid filename")
-		}
+	for _, content := range entry.Files {
 		if int64(len(content)) > config.Config.MaxFileSizeBytes {
 			return errors.New("file too large")
 		}

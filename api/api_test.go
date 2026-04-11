@@ -17,7 +17,6 @@ func setupTestConfig() {
 	config.Config.MaxMultipartBytes = 10 * 1024
 	config.Config.MaxFiles = 2
 	config.Config.MaxFileSizeBytes = 1024
-	config.Config.MaxFilenameLength = 64
 }
 
 func TestValidateEntryRejectsInvalidExpiration(t *testing.T) {

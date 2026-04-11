@@ -12,7 +12,7 @@ import (
 
 func deriveKey(passphrase string) []byte {
 	salt := fmt.Sprintf("pass-along-v2:%s", config.Config.ServerSecret)
-	return pbkdf2.Key([]byte(passphrase), []byte(salt), config.Config.KDFIterations, 32, sha512.New)
+	return pbkdf2.Key([]byte(passphrase), []byte(salt), 300000, 32, sha512.New)
 }
 
 func getBytes(key interface{}) ([]byte, error) {
