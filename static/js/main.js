@@ -235,6 +235,7 @@ class SecretManager {
 
       const fileInfoContainer = document.createElement("div");
       fileInfoContainer.style.overflow = "hidden";
+      fileInfoContainer.style.flexGrow = "1";
       fileInfoContainer.appendChild(fileNameDiv);
       fileInfoContainer.appendChild(fileSizeDiv);
 
@@ -243,6 +244,34 @@ class SecretManager {
       removeButton.innerHTML = createFeatherIcon("x");
       removeButton.addEventListener('click', () => this.removeFile(file.name));
 
+      const thumbnailContainer = document.createElement("div");
+      thumbnailContainer.className = "file-thumbnail";
+      thumbnailContainer.style.width = "40px";
+      thumbnailContainer.style.height = "40px";
+      thumbnailContainer.style.marginRight = "10px";
+      thumbnailContainer.style.display = "flex";
+      thumbnailContainer.style.alignItems = "center";
+      thumbnailContainer.style.justifyContent = "center";
+      thumbnailContainer.style.overflow = "hidden";
+      thumbnailContainer.style.borderRadius = "4px";
+      thumbnailContainer.style.backgroundColor = "var(--border-color, #e0e0e0)";
+      thumbnailContainer.style.flexShrink = "0";
+
+      if (file.type && file.type.startsWith('image/')) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        thumbnailContainer.appendChild(img);
+      } else {
+        thumbnailContainer.innerHTML = createFeatherIcon("file");
+      }
+
+      li.style.display = "flex";
+      li.style.alignItems = "center";
+
+      li.appendChild(thumbnailContainer);
       li.appendChild(fileInfoContainer);
       li.appendChild(removeButton);
 
