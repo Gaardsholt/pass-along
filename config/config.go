@@ -14,7 +14,7 @@ import (
 type GlobalConfig struct {
 	ServerPort        *int    `required:"false" split_words:"true"`
 	HealthPort        *int    `required:"false" split_words:"true"`
-	ServerSecret      string  `required:"true" split_words:"true"`
+	ServerSalt        string  `required:"false" split_words:"true"`
 	DatabaseType      *string `required:"false" split_words:"true" default:"in-memory"`
 	RedisServer       *string `required:"false" split_words:"true"`
 	RedisPort         *int    `required:"false" split_words:"true"`
@@ -47,10 +47,6 @@ func LoadConfig() {
 }
 
 func validateConfig() {
-	if len(strings.TrimSpace(Config.ServerSecret)) < 32 {
-		log.Fatal().Err(nil).Msg("SERVER_SECRET must be at least 32 characters")
-	}
-
 	if Config.MaxSecretBytes <= 0 {
 		log.Fatal().Err(nil).Msg("MAX_SECRET_BYTES must be > 0")
 	}

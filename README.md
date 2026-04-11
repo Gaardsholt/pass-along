@@ -12,7 +12,7 @@ The main application uses port `8080`.
 The following config can be set via environment variables
 | Tables                                        | Required | Default               |
 | --------------------------------------------- | :------: | --------------------- |
-| [SERVER_SECRET](#SERVER_SECRET)               |    x     |                       |
+| [SERVER_SALT](#SERVER_SALT)                   |    x     |                       |
 | [DATABASE_TYPE](#DATABASE_TYPE)               |          | in-memory             |
 | [REDIS_SERVER](#REDIS_SERVER)                 |          | localhost             |
 | [REDIS_PORT](#REDIS_PORT)                     |          | 6379                  |
@@ -28,7 +28,7 @@ The following config can be set via environment variables
 | [HSTS_MAX_AGE_SECONDS](#HSTS_MAX_AGE_SECONDS) |          | 31536000              |
 
 
-### SERVER_SECRET
+### SERVER_SALT
 Required. Must be at least 32 characters and high entropy.
 This value is used as server-side secret material for key derivation.
 
@@ -105,5 +105,5 @@ curl --request GET \
 - Keep `/healthz` and `/metrics` on a non-public network.
 - Always run behind TLS (reverse proxy / ingress is supported).
 - Security headers and no-store cache controls are enabled by default.
-- Rotate `SERVER_SECRET` as part of incident response.
+- Rotate `SERVER_SALT` as part of incident response.
 - If a link is leaked, treat the secret as compromised and rotate underlying credentials.
