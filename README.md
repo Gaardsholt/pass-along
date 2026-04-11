@@ -10,26 +10,26 @@ The main application uses port `8080`.
 ## Server config
 
 The following config can be set via environment variables
-| Tables                                  | Required | Default               |
-| --------------------------------------- | :------: | --------------------- |
-| [SERVER_SECRET](#SERVER_SECRET)         |    x     |                       |
-| [DATABASE_TYPE](#DATABASE_TYPE)         |          | in-memory             |
-| [REDIS_SERVER](#REDIS_SERVER)           |          | localhost             |
-| [REDIS_PORT](#REDIS_PORT)               |          | 6379                  |
-| [SERVER_PORT](#SERVER_PORT)             |          | 8080                  |
-| [HEALTH_PORT](#HEALTH_PORT)             |          | 8888                  |
-| [LOG_LEVEL](#LOG_LEVEL)                 |          | info                  |
-| [VALID_FOR_OPTIONS](#VALID_FOR_OPTIONS) |          | 3600,7200,43200,86400 |
-| [KDF_ITERATIONS](#KDF_ITERATIONS)       |          | 600000                |
-| [MAX_SECRET_BYTES](#MAX_SECRET_BYTES)   |          | 1048576               |
-| [MAX_MULTIPART_BYTES](#MAX_MULTIPART_BYTES) |      | 10485760              |
-| [MAX_FILES](#MAX_FILES)                 |          | 10                    |
-| [MAX_FILE_SIZE_BYTES](#MAX_FILE_SIZE_BYTES) |      | 2097152               |
-| [MAX_FILENAME_LENGTH](#MAX_FILENAME_LENGTH) |      | 255                   |
-| [RATE_LIMIT_WINDOW_SECONDS](#RATE_LIMIT_WINDOW_SECONDS) |  | 60          |
-| [MAX_REQUESTS_PER_WINDOW](#MAX_REQUESTS_PER_WINDOW) |      | 120          |
-| [ENABLE_HSTS](#ENABLE_HSTS)             |          | false                 |
-| [HSTS_MAX_AGE_SECONDS](#HSTS_MAX_AGE_SECONDS) |      | 31536000        |
+| Tables                                                  | Required | Default               |
+| ------------------------------------------------------- | :------: | --------------------- |
+| [SERVER_SECRET](#SERVER_SECRET)                         |    x     |                       |
+| [DATABASE_TYPE](#DATABASE_TYPE)                         |          | in-memory             |
+| [REDIS_SERVER](#REDIS_SERVER)                           |          | localhost             |
+| [REDIS_PORT](#REDIS_PORT)                               |          | 6379                  |
+| [SERVER_PORT](#SERVER_PORT)                             |          | 8080                  |
+| [HEALTH_PORT](#HEALTH_PORT)                             |          | 8888                  |
+| [LOG_LEVEL](#LOG_LEVEL)                                 |          | info                  |
+| [VALID_FOR_OPTIONS](#VALID_FOR_OPTIONS)                 |          | 3600,7200,43200,86400 |
+| [KDF_ITERATIONS](#KDF_ITERATIONS)                       |          | 600000                |
+| [MAX_SECRET_BYTES](#MAX_SECRET_BYTES)                   |          | 1048576               |
+| [MAX_MULTIPART_BYTES](#MAX_MULTIPART_BYTES)             |          | 10485760              |
+| [MAX_FILES](#MAX_FILES)                                 |          | 10                    |
+| [MAX_FILE_SIZE_BYTES](#MAX_FILE_SIZE_BYTES)             |          | 2097152               |
+| [MAX_FILENAME_LENGTH](#MAX_FILENAME_LENGTH)             |          | 255                   |
+| [RATE_LIMIT_WINDOW_SECONDS](#RATE_LIMIT_WINDOW_SECONDS) |          | 60                    |
+| [MAX_REQUESTS_PER_WINDOW](#MAX_REQUESTS_PER_WINDOW)     |          | 120                   |
+| [ENABLE_HSTS](#ENABLE_HSTS)                             |          | false                 |
+| [HSTS_MAX_AGE_SECONDS](#HSTS_MAX_AGE_SECONDS)           |          | 31536000              |
 
 
 ### SERVER_SECRET

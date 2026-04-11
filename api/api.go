@@ -5,10 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/netip"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -56,7 +53,6 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
 	external.Use(securityHeadersMiddleware)
-	external.Use(rateLimitMiddleware)
 	external.HandleFunc("/api", NewHandler).Methods("POST")
 	external.HandleFunc("/api/valid-for-options", ValidForHandler).Methods("GET")
 	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
@@ -404,67 +400,4 @@ func newRateLimiter() *rateLimitStore {
 	return &rateLimitStore{
 		Windows: map[string]*requestWindow{},
 	}
-}
-
-func rateLimitMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/api") {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		clientID := getClientIdentifier(r)
-		now := time.Now()
-		windowDuration := time.Duration(config.Config.RateLimitWindowSeconds) * time.Second
-
-		limiter.Lock.Lock()
-		window, exists := limiter.Windows[clientID]
-		if !exists || now.Sub(window.Start) >= windowDuration {
-			limiter.Windows[clientID] = &requestWindow{
-				Start: now,
-				Count: 1,
-			}
-			limiter.Lock.Unlock()
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		if window.Count >= config.Config.MaxRequestsPerWindow {
-			limiter.Lock.Unlock()
-			w.Header().Set("Retry-After", strconv.Itoa(config.Config.RateLimitWindowSeconds))
-			writeError(w, http.StatusTooManyRequests, "too many requests")
-			return
-		}
-
-		window.Count++
-		limiter.Lock.Unlock()
-		next.ServeHTTP(w, r)
-	})
-}
-
-func getClientIdentifier(r *http.Request) string {
-	if config.Config.EnableTrustedProxyIP {
-		forwardedForHeader := r.Header.Get(config.Config.TrustedProxyHeader)
-		if strings.TrimSpace(forwardedForHeader) == "" {
-			log.Warn().Msg("trusted proxy mode enabled but proxy header missing")
-			return untrustedProxyClientID
-		}
-
-		forwardedForParts := strings.Split(forwardedForHeader, ",")
-		rightMost := strings.TrimSpace(forwardedForParts[len(forwardedForParts)-1])
-		if ip, err := netip.ParseAddr(rightMost); err == nil {
-			return ip.String()
-		}
-		log.Warn().Msg("trusted proxy mode enabled but proxy header invalid")
-		return untrustedProxyClientID
-	}
-
-	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
-	if err != nil {
-		host = strings.TrimSpace(r.RemoteAddr)
-	}
-	if ip, err := netip.ParseAddr(host); err == nil {
-		return ip.String()
-	}
-	return "unknown"
 }
