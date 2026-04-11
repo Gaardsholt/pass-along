@@ -1,30 +1,36 @@
 class SecretManager {
   constructor() {
     this.filesToUpload = [];
-    this.initializeValidForOptions();
+    this.rejectedFiles = [];
+    this.maxFiles = 10;
+    this.maxFileSizeBytes = 2097152;
+    this.initializeConfig();
     this.initializeFileInput();
     this.initializeBlurToggle();
   }
 
 
   /**
-   * Initializes the "valid for" options by fetching them from the API.
+   * Initializes the config by fetching it from the API.
    */
-  initializeValidForOptions() {
-    // Get expiration options from API
-    doCall("GET", "/api/valid-for-options", null, (status, response) => {
+  initializeConfig() {
+    // Get config from API
+    doCall("GET", "/api/config", null, (status, response) => {
       if (status !== 200) {
-        console.error("Failed to fetch valid-for options. Status:", status, "Response:", response);
+        console.error("Failed to fetch config. Status:", status, "Response:", response);
         return;
       }
       const JsonResponse = JSON.parse(response);
 
+      this.maxFiles = JsonResponse.max_files;
+      this.maxFileSizeBytes = JsonResponse.max_file_size_bytes;
+
       let validForElement = document.getElementById("valid-for");
 
-      for (const key in JsonResponse) {
+      for (const key in JsonResponse.valid_for_options) {
         let opt = document.createElement('option');
         opt.value = key;
-        opt.innerHTML = `Valid for ${JsonResponse[key]}`;
+        opt.innerHTML = `Valid for ${JsonResponse.valid_for_options[key]}`;
         validForElement.appendChild(opt);
       }
     });
@@ -111,7 +117,36 @@ class SecretManager {
    * @param {FileList} newFiles - The files to add.
    */
   async addFiles(newFiles) {
+    let validFilesToAdd = [];
+
     for (const file of newFiles) {
+      if (file.size > this.maxFileSizeBytes) {
+        this.rejectedFiles.push({
+          name: file.name,
+          size: file.size,
+          error: `Exceeds max size of ${this.formatFileSize(this.maxFileSizeBytes)}`,
+        });
+        continue;
+      }
+      validFilesToAdd.push(file);
+    }
+
+    if (this.filesToUpload.length + validFilesToAdd.length > this.maxFiles) {
+      const availableSlots = this.maxFiles - this.filesToUpload.length;
+
+      const rejectedBatch = validFilesToAdd.slice(availableSlots);
+      for (const file of rejectedBatch) {
+        this.rejectedFiles.push({
+          name: file.name,
+          size: file.size,
+          error: `Maximum of ${this.maxFiles} files allowed`,
+        });
+      }
+
+      validFilesToAdd = validFilesToAdd.slice(0, availableSlots);
+    }
+
+    for (const file of validFilesToAdd) {
       const existingFileIndex = this.filesToUpload.findIndex((f) => f.name === file.name);
 
       if (existingFileIndex !== -1) {
@@ -167,6 +202,7 @@ class SecretManager {
    */
   removeFile(fileName) {
     this.filesToUpload = this.filesToUpload.filter((f) => f.name !== fileName);
+    this.rejectedFiles = this.rejectedFiles.filter((f) => f.name !== fileName);
     this.updateFileList();
   }
 
@@ -177,7 +213,7 @@ class SecretManager {
     const fileList = document.getElementById("file-list");
     fileList.innerHTML = ""; // Clear the list
 
-    for (const file of this.filesToUpload) {
+    const renderFileItem = (file, errorMsg = null) => {
       const fileSize = this.formatFileSize(file.size);
 
       const li = document.createElement("li");
@@ -189,7 +225,13 @@ class SecretManager {
 
       const fileSizeDiv = document.createElement("div");
       fileSizeDiv.className = "file-size";
-      fileSizeDiv.textContent = fileSize;
+
+      if (errorMsg) {
+        fileSizeDiv.textContent = errorMsg;
+        fileSizeDiv.style.color = "var(--error-color, #dc3545)";
+      } else {
+        fileSizeDiv.textContent = fileSize;
+      }
 
       const fileInfoContainer = document.createElement("div");
       fileInfoContainer.style.overflow = "hidden";
@@ -204,7 +246,27 @@ class SecretManager {
       li.appendChild(fileInfoContainer);
       li.appendChild(removeButton);
 
-      fileList.appendChild(li);
+      return li;
+    };
+
+    for (const file of this.filesToUpload) {
+      fileList.appendChild(renderFileItem(file));
+    }
+
+    for (const file of this.rejectedFiles) {
+      fileList.appendChild(renderFileItem(file, file.error));
+    }
+
+    const saveButton = document.getElementById("save");
+    if (saveButton) {
+      if (this.rejectedFiles.length > 0) {
+        saveButton.disabled = true;
+        saveButton.title = "Please remove files with errors before creating the secret";
+      } else {
+        const secretContent = document.getElementById("secret-content");
+        saveButton.disabled = secretContent && secretContent.value.trim() === "";
+        saveButton.title = "";
+      }
     }
   }
 
@@ -428,7 +490,15 @@ if (params.id) {
  * @param {HTMLInputElement} el - The input element to check.
  */
 function updateSaveButton(el) {
-  document.getElementById("save").disabled = el.value.trim() === "";
+  const saveButton = document.getElementById("save");
+  if (!saveButton) return;
+
+  if (window.secretManager && window.secretManager.rejectedFiles && window.secretManager.rejectedFiles.length > 0) {
+    saveButton.disabled = true;
+    return;
+  }
+
+  saveButton.disabled = el.value.trim() === "";
 }
 
 /**
@@ -512,6 +582,10 @@ try {
 
   // Create secret button
   document.getElementById("save").addEventListener("click", function () {
+    if (window.secretManager.rejectedFiles && window.secretManager.rejectedFiles.length > 0) {
+      return;
+    }
+
     // Change button state to loading
     const saveButton = document.getElementById("save");
     const originalContent = saveButton.innerHTML;

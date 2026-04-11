@@ -52,7 +52,7 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	external := mux.NewRouter()
 	external.Use(securityHeadersMiddleware)
 	external.HandleFunc("/api", NewHandler).Methods("POST")
-	external.HandleFunc("/api/valid-for-options", ValidForHandler).Methods("GET")
+	external.HandleFunc("/api/config", ConfigHandler).Methods("GET")
 	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
 	external.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
 
@@ -163,8 +163,15 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", token)
 }
 
-// ValidForHandler returns the options you can choose in "Valid for" field
-func ValidForHandler(w http.ResponseWriter, r *http.Request) {
+// ConfigResponse is the struct being sent to the frontend for the `/api/config` endpoint
+type ConfigResponse struct {
+	ValidForOptions  map[int]string `json:"valid_for_options"`
+	MaxFiles         int            `json:"max_files"`
+	MaxFileSizeBytes int64          `json:"max_file_size_bytes"`
+}
+
+// ConfigHandler returns the server configuration
+func ConfigHandler(w http.ResponseWriter, r *http.Request) {
 	setNoStore(w)
 	options := map[int]string{}
 
@@ -172,9 +179,15 @@ func ValidForHandler(w http.ResponseWriter, r *http.Request) {
 		options[v] = humanDuration(v)
 	}
 
+	response := ConfigResponse{
+		ValidForOptions:  options,
+		MaxFiles:         config.Config.MaxFiles,
+		MaxFileSizeBytes: config.Config.MaxFileSizeBytes,
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(options)
+	json.NewEncoder(w).Encode(response)
 }
 
 // humanDuration converts duration in seconds to human readable format
