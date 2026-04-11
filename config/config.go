@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
@@ -11,14 +12,19 @@ import (
 
 // GlobalConfig holds config parameters
 type GlobalConfig struct {
-	ServerPort      *int    `required:"false" split_words:"true"`
-	HealthPort      *int    `required:"false" split_words:"true"`
-	ServerSalt      string  `required:"false" split_words:"true"`
-	DatabaseType    *string `required:"false" split_words:"true" default:"in-memory"`
-	RedisServer     *string `required:"false" split_words:"true"`
-	RedisPort       *int    `required:"false" split_words:"true"`
-	LogLevel        string  `required:"false" split_words:"true"`
-	ValidForOptions []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
+	ServerPort        *int    `required:"false" split_words:"true"`
+	HealthPort        *int    `required:"false" split_words:"true"`
+	ServerSalt        string  `required:"false" split_words:"true"`
+	DatabaseType      *string `required:"false" split_words:"true" default:"in-memory"`
+	RedisServer       *string `required:"false" split_words:"true"`
+	RedisPort         *int    `required:"false" split_words:"true"`
+	LogLevel          string  `required:"false" split_words:"true"`
+	ValidForOptions   []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
+	MaxSecretBytes    int     `required:"false" split_words:"true" default:"10485760"`
+	MaxFiles          int     `required:"false" split_words:"true" default:"20"`
+	MaxFileSizeBytes  int64   `required:"false" split_words:"true" default:"104857600"`
+	EnableHSTS        bool    `required:"false" split_words:"true" default:"false"`
+	HSTSMaxAgeSeconds int     `required:"false" split_words:"true" default:"31536000"`
 }
 
 var Config GlobalConfig
@@ -34,8 +40,46 @@ func LoadConfig() {
 		log.Fatal().Err(nil).Msg("SERVER_PORT and HEALTH_PORT must be different")
 	}
 
+	validateConfig()
 	setupLogLevel()
 
+}
+
+func validateConfig() {
+	if Config.MaxSecretBytes <= 0 {
+		log.Fatal().Err(nil).Msg("MAX_SECRET_BYTES must be > 0")
+	}
+
+	if Config.MaxFiles <= 0 {
+		log.Fatal().Err(nil).Msg("MAX_FILES must be > 0")
+	}
+
+	if Config.MaxFileSizeBytes <= 0 {
+		log.Fatal().Err(nil).Msg("MAX_FILE_SIZE_BYTES must be > 0")
+	}
+
+	if Config.EnableHSTS && Config.HSTSMaxAgeSeconds <= 0 {
+		log.Fatal().Err(nil).Msg("HSTS_MAX_AGE_SECONDS must be > 0 when ENABLE_HSTS=true")
+	}
+
+	if len(Config.ValidForOptions) == 0 {
+		log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS must not be empty")
+	}
+
+	seen := map[int]struct{}{}
+	for _, v := range Config.ValidForOptions {
+		if v <= 0 {
+			log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS values must be > 0")
+		}
+		if _, exists := seen[v]; exists {
+			log.Fatal().Err(nil).Msg("VALID_FOR_OPTIONS must be unique")
+		}
+		seen[v] = struct{}{}
+	}
+}
+
+func (c GlobalConfig) IsValidExpiration(seconds int) bool {
+	return slices.Contains(c.ValidForOptions, seconds)
 }
 
 // GetDatabaseType determines if a correct db is set

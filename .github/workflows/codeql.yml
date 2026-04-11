@@ -15,7 +15,6 @@ on:
   push:
     branches: ["master"]
   pull_request:
-    branches: ["master"]
   schedule:
     - cron: "45 5 * * 5"
 
@@ -116,4 +115,4 @@ jobs:
       - name: Run snapshot action
         uses: actions/go-dependency-submission@f35d5c9af13ce9cc32f7930b171e315e878f6921 # v2.0.3
         with:
-            go-mod-path: "./go.mod"
+          go-mod-path: "./go.mod"

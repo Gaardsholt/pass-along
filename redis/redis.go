@@ -17,6 +17,8 @@ type SecretStore struct {
 
 var pool *redis.Pool
 
+const logIDPrefixLength = 8
+
 func New() (ss SecretStore, err error) {
 
 	server := config.Config.GetRedisServer()
@@ -26,24 +28,17 @@ func New() (ss SecretStore, err error) {
 		MaxIdle:   80,
 		MaxActive: 12000, // max number of connections
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
-			if err != nil {
-				panic(err.Error())
-			}
-			return c, err
+			return redis.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
 		},
 	}
 
-	defer func() {
-		// recover from panic if one occured. Set err to nil otherwise.
-		r := recover()
-		if r != nil {
-			err = fmt.Errorf("%s", r)
-		}
-	}()
-
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
+	if err := conn.Err(); err != nil {
+		return SecretStore{}, err
+	}
 
 	ss = SecretStore{
 		Data: make(map[string][]byte),
@@ -54,7 +49,9 @@ func New() (ss SecretStore, err error) {
 
 func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	_, err := conn.Do("HMSET", id, "secret", secret)
 	if err != nil {
@@ -73,7 +70,9 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 
 func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	secret, err := redis.Bytes(conn.Do("HGET", id, "secret"))
 	if err != nil {
@@ -85,11 +84,18 @@ func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 
 func (ss SecretStore) Delete(id string) {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
-	_, err := conn.Do("HDEL", id, "secret")
+	_, err := conn.Do("DEL", id)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to delete secret with id %s", id)
+		idPrefix := id
+		if len(idPrefix) > logIDPrefixLength {
+			idPrefix = idPrefix[:logIDPrefixLength]
+		}
+		log.Error().Err(err).Str("id_prefix", idPrefix).Msg("Failed to delete secret")
+		return
 	}
 	go metrics.SecretsDeleted.Inc()
 }

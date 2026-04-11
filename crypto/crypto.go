@@ -10,7 +10,7 @@ import (
 )
 
 func deriveKey(passphrase string) []byte {
-	return pbkdf2.Key([]byte(passphrase), []byte(config.Config.ServerSalt), 1000, 32, sha512.New)
+	return pbkdf2.Key([]byte(passphrase), []byte(config.Config.ServerSalt), 300000, 32, sha512.New)
 }
 
 func getBytes(key interface{}) ([]byte, error) {

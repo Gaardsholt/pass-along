@@ -31,6 +31,10 @@ func main() {
 	}
 
 	log.Info().Msg("The service is shutting down...")
-	externalServer.Shutdown(context.Background())
-	internalServer.Shutdown(context.Background())
+	if err := externalServer.Shutdown(context.Background()); err != nil {
+		log.Error().Err(err).Msg("Error shutting down external server")
+	}
+	if err := internalServer.Shutdown(context.Background()); err != nil {
+		log.Error().Err(err).Msg("Error shutting down internal server")
+	}
 }

@@ -11,21 +11,22 @@ import (
 func TestLoadConfigAsExpected(t *testing.T) {
 	// arrange
 	os.Clearenv()
-	os.Setenv("SERVER_SALT", "somesalt")
-	os.Setenv("DATABASE_TYPE", "redis")
+	_ = os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
+	_ = os.Setenv("DATABASE_TYPE", "redis")
 
 	// act
 	LoadConfig()
 
 	// assert
 	assert.Equal(t, "redis", *Config.DatabaseType)
-	assert.Equal(t, "somesalt", Config.ServerSalt)
+	assert.Equal(t, "0123456789abcdef0123456789abcdef", Config.ServerSalt)
 }
 
 // TestLoadConfigDefaultDB tests if defaults work when no db env set
 func TestLoadConfigDefaultDB(t *testing.T) {
 	// arrange
 	os.Clearenv()
+	_ = os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
 
 	// act
 	LoadConfig()
