@@ -288,8 +288,9 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) error {
-	r.Body = http.MaxBytesReader(w, r.Body, config.Config.MaxMultipartBytes)
-	err := r.ParseMultipartForm(config.Config.MaxMultipartBytes)
+	maxMultipartBytes := int64(config.Config.MaxFiles)*config.Config.MaxFileSizeBytes + int64(config.Config.MaxSecretBytes) + 1024*1024
+	r.Body = http.MaxBytesReader(w, r.Body, maxMultipartBytes)
+	err := r.ParseMultipartForm(maxMultipartBytes)
 	if err != nil {
 		return errors.New("failed to parse multipart form")
 	}

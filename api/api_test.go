@@ -14,7 +14,6 @@ func setupTestConfig() {
 	validFor := []int{60, 3600}
 	config.Config.ValidForOptions = validFor
 	config.Config.MaxSecretBytes = 1024
-	config.Config.MaxMultipartBytes = 10 * 1024
 	config.Config.MaxFiles = 2
 	config.Config.MaxFileSizeBytes = 1024
 }

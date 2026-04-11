@@ -20,10 +20,9 @@ The following config can be set via environment variables
 | [HEALTH_PORT](#HEALTH_PORT)                   |          | 8888                  |
 | [LOG_LEVEL](#LOG_LEVEL)                       |          | info                  |
 | [VALID_FOR_OPTIONS](#VALID_FOR_OPTIONS)       |          | 3600,7200,43200,86400 |
-| [MAX_SECRET_BYTES](#MAX_SECRET_BYTES)         |          | 1048576               |
-| [MAX_MULTIPART_BYTES](#MAX_MULTIPART_BYTES)   |          | 10485760              |
-| [MAX_FILES](#MAX_FILES)                       |          | 10                    |
-| [MAX_FILE_SIZE_BYTES](#MAX_FILE_SIZE_BYTES)   |          | 2097152               |
+| [MAX_SECRET_BYTES](#MAX_SECRET_BYTES)         |          | 10485760              |
+| [MAX_FILES](#MAX_FILES)                       |          | 20                    |
+| [MAX_FILE_SIZE_BYTES](#MAX_FILE_SIZE_BYTES)   |          | 104857600             |
 | [ENABLE_HSTS](#ENABLE_HSTS)                   |          | false                 |
 | [HSTS_MAX_AGE_SECONDS](#HSTS_MAX_AGE_SECONDS) |          | 31536000              |
 
@@ -56,9 +55,6 @@ Only these values are accepted server-side for `expires_in`.
 
 ### MAX_SECRET_BYTES
 Maximum size of secret text content.
-
-### MAX_MULTIPART_BYTES
-Maximum size of full multipart request body.
 
 ### MAX_FILES
 Maximum number of attached files.

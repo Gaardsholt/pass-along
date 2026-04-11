@@ -2,8 +2,8 @@ class SecretManager {
   constructor() {
     this.filesToUpload = [];
     this.rejectedFiles = [];
-    this.maxFiles = 10;
-    this.maxFileSizeBytes = 2097152;
+    this.maxFiles = 20;
+    this.maxFileSizeBytes = 104857600;
     this.initializeConfig();
     this.initializeFileInput();
     this.initializeBlurToggle();

@@ -20,10 +20,9 @@ type GlobalConfig struct {
 	RedisPort         *int    `required:"false" split_words:"true"`
 	LogLevel          string  `required:"false" split_words:"true"`
 	ValidForOptions   []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
-	MaxSecretBytes    int     `required:"false" split_words:"true" default:"1048576"`
-	MaxMultipartBytes int64   `required:"false" split_words:"true" default:"10485760"`
-	MaxFiles          int     `required:"false" split_words:"true" default:"10"`
-	MaxFileSizeBytes  int64   `required:"false" split_words:"true" default:"2097152"`
+	MaxSecretBytes    int     `required:"false" split_words:"true" default:"10485760"`
+	MaxFiles          int     `required:"false" split_words:"true" default:"20"`
+	MaxFileSizeBytes  int64   `required:"false" split_words:"true" default:"104857600"`
 	EnableHSTS        bool    `required:"false" split_words:"true" default:"false"`
 	HSTSMaxAgeSeconds int     `required:"false" split_words:"true" default:"31536000"`
 }
@@ -49,10 +48,6 @@ func LoadConfig() {
 func validateConfig() {
 	if Config.MaxSecretBytes <= 0 {
 		log.Fatal().Err(nil).Msg("MAX_SECRET_BYTES must be > 0")
-	}
-
-	if Config.MaxMultipartBytes <= 0 {
-		log.Fatal().Err(nil).Msg("MAX_MULTIPART_BYTES must be > 0")
 	}
 
 	if Config.MaxFiles <= 0 {
