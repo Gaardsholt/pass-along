@@ -51,9 +51,13 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	internal := mux.NewRouter()
 	external := mux.NewRouter()
 	external.Use(securityHeadersMiddleware)
-	external.HandleFunc("/api", NewHandler).Methods("POST")
-	external.HandleFunc("/api/config", ConfigHandler).Methods("GET")
-	external.HandleFunc("/api/{id}", GetHandler).Methods("GET")
+
+	apiRouter := external.PathPrefix("/api").Subrouter()
+	apiRouter.Use(noStoreMiddleware)
+	apiRouter.HandleFunc("", NewHandler).Methods("POST")
+	apiRouter.HandleFunc("/config", ConfigHandler).Methods("GET")
+	apiRouter.HandleFunc("/{id}", GetHandler).Methods("GET")
+
 	external.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
 
 	// external.HandleFunc("/", IndexHandler).Methods("GET")
@@ -98,8 +102,6 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 func NewHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var entry types.Entry
-
-	setNoStore(w)
 
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		r.Body = http.MaxBytesReader(w, r.Body, int64(config.Config.MaxSecretBytes))
@@ -172,7 +174,6 @@ type ConfigResponse struct {
 
 // ConfigHandler returns the server configuration
 func ConfigHandler(w http.ResponseWriter, r *http.Request) {
-	setNoStore(w)
 	options := map[int]string{}
 
 	for _, v := range config.Config.ValidForOptions {
@@ -225,7 +226,6 @@ func humanDuration(duration int) string {
 
 // GetHandler retrieves a secret in the secret store
 func GetHandler(w http.ResponseWriter, r *http.Request) {
-	setNoStore(w)
 	vars := mux.Vars(r)
 
 	token := vars["id"]
@@ -371,10 +371,13 @@ func writeError(w http.ResponseWriter, status int, message string) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
-func setNoStore(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-store, max-age=0")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "0")
+func noStoreMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store, max-age=0")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func securityHeadersMiddleware(next http.Handler) http.Handler {
