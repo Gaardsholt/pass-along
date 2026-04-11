@@ -22,8 +22,7 @@ import (
 )
 
 const (
-	errServerShuttingDown  = "http: Server closed"
-	untrustedProxyClientID = "untrusted-proxy"
+	errServerShuttingDown = "http: Server closed"
 )
 
 var secretStore datastore.SecretStore
