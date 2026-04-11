@@ -162,7 +162,7 @@ func NewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "%s", token)
+	_, _ = fmt.Fprintf(w, "%s", token)
 }
 
 // ConfigResponse is the struct being sent to the frontend for the `/api/config` endpoint
@@ -188,7 +188,7 @@ func ConfigHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // humanDuration converts duration in seconds to human readable format
@@ -232,14 +232,14 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	lookupID, accessKey, err := types.ParseToken(token)
 	if err != nil {
 		w.WriteHeader(http.StatusGone)
-		fmt.Fprint(w, "secret not found")
+		_, _ = fmt.Fprint(w, "secret not found")
 		return
 	}
 
 	secretData, gotData := secretStore.Get(lookupID)
 	if !gotData {
 		w.WriteHeader(http.StatusGone)
-		fmt.Fprint(w, "secret not found")
+		_, _ = fmt.Fprint(w, "secret not found")
 		return
 	}
 
@@ -247,7 +247,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to decrypt secret")
 		w.WriteHeader(http.StatusGone)
-		fmt.Fprint(w, "secret not found")
+		_, _ = fmt.Fprint(w, "secret not found")
 		return
 	}
 
@@ -280,11 +280,11 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	if gotData {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResponse)
+		_, _ = w.Write(jsonResponse)
 		return
 	}
 
-	fmt.Fprintf(w, "")
+	_, _ = fmt.Fprintf(w, "")
 }
 
 func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) error {
@@ -321,7 +321,9 @@ func getFormData(w http.ResponseWriter, r *http.Request, entry *types.Entry) err
 		if err != nil {
 			return errors.New("unable to read file")
 		}
-		defer file.Close()
+		defer func() {
+			_ = file.Close()
+		}()
 
 		limitedReader := io.LimitReader(file, config.Config.MaxFileSizeBytes+1)
 		fileBytes, err := io.ReadAll(limitedReader)

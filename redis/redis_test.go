@@ -12,8 +12,6 @@ import (
 	"gotest.tools/assert"
 )
 
-var secretStore SecretStore
-
 // GetTestRedisServer creates the test server
 func GetTestRedisServer(t *testing.T) SecretStore {
 	t.Helper()

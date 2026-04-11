@@ -11,8 +11,8 @@ import (
 func TestLoadConfigAsExpected(t *testing.T) {
 	// arrange
 	os.Clearenv()
-	os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
-	os.Setenv("DATABASE_TYPE", "redis")
+	_ = os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
+	_ = os.Setenv("DATABASE_TYPE", "redis")
 
 	// act
 	LoadConfig()
@@ -26,7 +26,7 @@ func TestLoadConfigAsExpected(t *testing.T) {
 func TestLoadConfigDefaultDB(t *testing.T) {
 	// arrange
 	os.Clearenv()
-	os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
+	_ = os.Setenv("SERVER_SALT", "0123456789abcdef0123456789abcdef")
 
 	// act
 	LoadConfig()

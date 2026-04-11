@@ -33,7 +33,9 @@ func New() (ss SecretStore, err error) {
 	}
 
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	if err := conn.Err(); err != nil {
 		return SecretStore{}, err
 	}
@@ -47,7 +49,9 @@ func New() (ss SecretStore, err error) {
 
 func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	_, err := conn.Do("HMSET", id, "secret", secret)
 	if err != nil {
@@ -66,7 +70,9 @@ func (ss SecretStore) Add(id string, secret []byte, expiresIn int) error {
 
 func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	secret, err := redis.Bytes(conn.Do("HGET", id, "secret"))
 	if err != nil {
@@ -78,7 +84,9 @@ func (ss SecretStore) Get(id string) (secret []byte, gotData bool) {
 
 func (ss SecretStore) Delete(id string) {
 	conn := pool.Get()
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	_, err := conn.Do("DEL", id)
 	if err != nil {
