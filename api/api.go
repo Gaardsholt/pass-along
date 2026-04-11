@@ -28,7 +28,6 @@ const (
 
 var secretStore datastore.SecretStore
 var lock = sync.RWMutex{}
-var limiter = newRateLimiter()
 
 // StartServer starts the internal and external http server and initiates the secrets store
 func StartServer() (internalServer *http.Server, externalServer *http.Server) {
@@ -384,20 +383,4 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-type requestWindow struct {
-	Start time.Time
-	Count int
-}
-
-type rateLimitStore struct {
-	Lock    sync.Mutex
-	Windows map[string]*requestWindow
-}
-
-func newRateLimiter() *rateLimitStore {
-	return &rateLimitStore{
-		Windows: map[string]*requestWindow{},
-	}
 }

@@ -12,26 +12,22 @@ import (
 
 // GlobalConfig holds config parameters
 type GlobalConfig struct {
-	ServerPort             *int    `required:"false" split_words:"true"`
-	HealthPort             *int    `required:"false" split_words:"true"`
-	ServerSecret           string  `required:"true" split_words:"true"`
-	DatabaseType           *string `required:"false" split_words:"true" default:"in-memory"`
-	RedisServer            *string `required:"false" split_words:"true"`
-	RedisPort              *int    `required:"false" split_words:"true"`
-	LogLevel               string  `required:"false" split_words:"true"`
-	ValidForOptions        []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
-	KDFIterations          int     `required:"false" split_words:"true" default:"600000"`
-	MaxSecretBytes         int     `required:"false" split_words:"true" default:"1048576"`
-	MaxMultipartBytes      int64   `required:"false" split_words:"true" default:"10485760"`
-	MaxFiles               int     `required:"false" split_words:"true" default:"10"`
-	MaxFileSizeBytes       int64   `required:"false" split_words:"true" default:"2097152"`
-	MaxFilenameLength      int     `required:"false" split_words:"true" default:"255"`
-	RateLimitWindowSeconds int     `required:"false" split_words:"true" default:"60"`
-	MaxRequestsPerWindow   int     `required:"false" split_words:"true" default:"120"`
-	EnableHSTS             bool    `required:"false" split_words:"true" default:"false"`
-	HSTSMaxAgeSeconds      int     `required:"false" split_words:"true" default:"31536000"`
-	TrustedProxyHeader     string  `required:"false" split_words:"true" default:"X-Forwarded-For"`
-	EnableTrustedProxyIP   bool    `required:"false" split_words:"true" default:"false"`
+	ServerPort        *int    `required:"false" split_words:"true"`
+	HealthPort        *int    `required:"false" split_words:"true"`
+	ServerSecret      string  `required:"true" split_words:"true"`
+	DatabaseType      *string `required:"false" split_words:"true" default:"in-memory"`
+	RedisServer       *string `required:"false" split_words:"true"`
+	RedisPort         *int    `required:"false" split_words:"true"`
+	LogLevel          string  `required:"false" split_words:"true"`
+	ValidForOptions   []int   `required:"false" split_words:"true" default:"3600,7200,43200,86400"`
+	KDFIterations     int     `required:"false" split_words:"true" default:"600000"`
+	MaxSecretBytes    int     `required:"false" split_words:"true" default:"1048576"`
+	MaxMultipartBytes int64   `required:"false" split_words:"true" default:"10485760"`
+	MaxFiles          int     `required:"false" split_words:"true" default:"10"`
+	MaxFileSizeBytes  int64   `required:"false" split_words:"true" default:"2097152"`
+	MaxFilenameLength int     `required:"false" split_words:"true" default:"255"`
+	EnableHSTS        bool    `required:"false" split_words:"true" default:"false"`
+	HSTSMaxAgeSeconds int     `required:"false" split_words:"true" default:"31536000"`
 }
 
 var Config GlobalConfig
@@ -80,14 +76,6 @@ func validateConfig() {
 
 	if Config.MaxFilenameLength <= 0 {
 		log.Fatal().Err(nil).Msg("MAX_FILENAME_LENGTH must be > 0")
-	}
-
-	if Config.RateLimitWindowSeconds <= 0 {
-		log.Fatal().Err(nil).Msg("RATE_LIMIT_WINDOW_SECONDS must be > 0")
-	}
-
-	if Config.MaxRequestsPerWindow <= 0 {
-		log.Fatal().Err(nil).Msg("MAX_REQUESTS_PER_WINDOW must be > 0")
 	}
 
 	if Config.EnableHSTS && Config.HSTSMaxAgeSeconds <= 0 {
