@@ -223,7 +223,7 @@ func humanDuration(duration int) string {
 		return fmt.Sprintf("%d day", duration)
 	}
 
-	return fmt.Sprintf("%d days", duration/60/60/24)
+	return fmt.Sprintf("%d days", duration)
 }
 
 // GetHandler retrieves a secret in the secret store

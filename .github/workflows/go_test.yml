@@ -36,6 +36,22 @@ jobs:
         with:
           go-mod-path: "go.mod"
 
+      - name: Fuzz tests
+        run: |
+          fuzztime=10s
+
+          while IFS= read -r package; do
+            targets=$(go test "$package" -run=^$ -list '^Fuzz' | grep '^Fuzz' || true)
+            if [[ -z "$targets" ]]; then
+              continue
+            fi
+
+            while IFS= read -r target; do
+              echo "Fuzzing ${package}/${target}"
+              go test "$package" -run=^$ -fuzz="^${target}$" -fuzztime="$fuzztime"
+            done <<< "$targets"
+          done < <(go list ./...)
+
       - name: Go format
         run: |
           go fmt ./...
