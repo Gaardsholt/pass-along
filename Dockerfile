@@ -1,4 +1,4 @@
-FROM golang:1.26.2-alpine AS builder
+FROM golang:1.26.4-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags="-w -s"
 
-FROM alpine:3.23.4
+FROM alpine:3.24.0
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 appgroup && \
