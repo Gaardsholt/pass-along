@@ -1,13 +1,16 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Gaardsholt/pass-along/config"
@@ -21,15 +24,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	errServerShuttingDown = "http: Server closed"
-)
-
 var secretStore datastore.SecretStore
 var lock = sync.RWMutex{}
 
 // StartServer starts the internal and external http server and initiates the secrets store
-func StartServer() (internalServer *http.Server, externalServer *http.Server) {
+func StartServer(ctx context.Context, isShuttingDown *atomic.Bool) (internalServer *http.Server, externalServer *http.Server, closeStore func() error) {
 	databaseType, err := config.Config.GetDatabaseType()
 	if err != nil {
 		log.Fatal().Err(err).Msgf("%s", err)
@@ -63,29 +62,32 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	// external.HandleFunc("/", IndexHandler).Methods("GET")
 
 	internal.HandleFunc("/healthz", healthz)
+	internal.HandleFunc("/readyz", readyz(isShuttingDown))
 	internal.Handle("/metrics", promhttp.HandlerFor(pr, promhttp.HandlerOpts{})).Methods("GET")
 
 	internalPort := config.Config.GetHealthPort()
 	internalServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", internalPort),
-		Handler: internal,
+		Addr:        fmt.Sprintf(":%d", internalPort),
+		Handler:     internal,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
 	go func() {
 		err := internalServer.ListenAndServe()
-		if err != nil && err.Error() != errServerShuttingDown {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msgf("Unable to run the internal server at port %d", internalPort)
 		}
 	}()
 
 	externalPort := config.Config.GetServerPort()
 	externalServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", externalPort),
-		Handler: external,
+		Addr:        fmt.Sprintf(":%d", externalPort),
+		Handler:     external,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 	go func() {
 		err := externalServer.ListenAndServe()
-		if err != nil && err.Error() != errServerShuttingDown {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msgf("Unable to run the external server at port %d", externalPort)
 		}
 	}()
@@ -93,9 +95,9 @@ func StartServer() (internalServer *http.Server, externalServer *http.Server) {
 	log.Info().Msgf("Site can now be accessed at http://localhost:%d", externalPort)
 	log.Info().Msgf("Health and metrics and can be accessed on http://localhost:%d", internalPort)
 
-	go secretStore.DeleteExpiredSecrets()
+	go secretStore.DeleteExpiredSecrets(ctx)
 
-	return
+	return internalServer, externalServer, secretStore.Close
 }
 
 // NewHandler creates a new secret in the secretstore
