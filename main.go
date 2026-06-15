@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
+	"time"
 
 	"github.com/Gaardsholt/pass-along/api"
 	"github.com/Gaardsholt/pass-along/config"
@@ -16,25 +17,45 @@ func init() {
 }
 
 func main() {
+	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	ongoingCtx, cancelOngoing := context.WithCancel(context.Background())
+	defer cancelOngoing()
 
-	internalServer, externalServer := api.StartServer()
+	var isShuttingDown atomic.Bool
+	internalServer, externalServer, closeStore := api.StartServer(ongoingCtx, &isShuttingDown)
 
-	killSignal := <-interrupt
-	switch killSignal {
-	case os.Interrupt:
-		log.Debug().Msg("Got SIGINT...")
-	case syscall.SIGTERM:
-		log.Debug().Msg("Got SIGTERM...")
-	}
+	<-rootCtx.Done()
+	stop()
 
-	log.Info().Msg("The service is shutting down...")
-	if err := externalServer.Shutdown(context.Background()); err != nil {
+	log.Info().Msg("The service is shutting down")
+	isShuttingDown.Store(true)
+
+	readinessDrainDelay := config.Config.GetReadinessDrainDelay()
+	log.Info().Dur("delay", readinessDrainDelay).Msg("Waiting for readiness change to propagate")
+	time.Sleep(readinessDrainDelay)
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), config.Config.GetHTTPShutdownTimeout())
+	defer cancelShutdown()
+
+	if err := externalServer.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("Error shutting down external server")
 	}
-	if err := internalServer.Shutdown(context.Background()); err != nil {
+	if err := internalServer.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("Error shutting down internal server")
 	}
+
+	cancelOngoing()
+	if shutdownCtx.Err() != nil {
+		hardDelay := config.Config.GetShutdownHardDelay()
+		log.Warn().Dur("delay", hardDelay).Msg("Shutdown timeout reached; allowing request contexts to observe cancellation")
+		time.Sleep(hardDelay)
+	}
+
+	if err := closeStore(); err != nil {
+		log.Error().Err(err).Msg("Error closing datastore")
+	}
+
+	log.Info().Msg("The service shut down gracefully")
 }

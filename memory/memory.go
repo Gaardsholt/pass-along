@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -57,22 +58,33 @@ func (ss SecretStore) Delete(id string) {
 	go metrics.SecretsDeleted.Inc()
 }
 
-func (ss SecretStore) DeleteExpiredSecrets() {
+func (ss SecretStore) DeleteExpiredSecrets(ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
 	for {
-		time.Sleep(5 * time.Minute)
-		now := time.Now().UTC()
-		ss.Lock.RLock()
-		expired := []string{}
-		for k, expiresAt := range ss.Expires {
-			if !expiresAt.After(now) {
-				expired = append(expired, k)
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			now := time.Now().UTC()
+			ss.Lock.RLock()
+			expired := []string{}
+			for k, expiresAt := range ss.Expires {
+				if !expiresAt.After(now) {
+					expired = append(expired, k)
+				}
+			}
+			ss.Lock.RUnlock()
+
+			for _, k := range expired {
+				log.Debug().Msg("Found expired secret, deleting...")
+				ss.Delete(k)
 			}
 		}
-		ss.Lock.RUnlock()
-
-		for _, k := range expired {
-			log.Debug().Msg("Found expired secret, deleting...")
-			ss.Delete(k)
-		}
 	}
+}
+
+func (ss SecretStore) Close() error {
+	return nil
 }

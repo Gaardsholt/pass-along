@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -100,6 +101,13 @@ func (ss SecretStore) Delete(id string) {
 	go metrics.SecretsDeleted.Inc()
 }
 
-func (ss SecretStore) DeleteExpiredSecrets() {
+func (ss SecretStore) DeleteExpiredSecrets(_ context.Context) {
 	log.Debug().Msg("Not doing anything as redis will automatically delete expired secrets")
+}
+
+func (ss SecretStore) Close() error {
+	if pool == nil {
+		return nil
+	}
+	return pool.Close()
 }
