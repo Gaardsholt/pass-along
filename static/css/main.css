@@ -182,6 +182,10 @@ textarea.input {
   margin-right: 0.5rem;
 }
 
+.feather-loader {
+  animation: spin 2s linear infinite;
+}
+
 .button:hover:not(.button:disabled) {
   background-color: var(--primary-dark);
   box-shadow: var(--shadow-md);
@@ -568,6 +572,15 @@ textarea.input {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
