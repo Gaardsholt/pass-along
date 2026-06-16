@@ -536,7 +536,8 @@ function updateSaveButton(el) {
  * @returns {string} The svg element, as a string.
  */
 function createFeatherIcon(icon) {
-  return `<svg class="feather"><use href="feather-sprite.svg#${icon}" /></svg>`;
+  const classes = icon === "loader" ? "feather feather-loader" : "feather";
+  return `<svg class="${classes}"><use href="feather-sprite.svg#${icon}" /></svg>`;
 }
 
 /**
