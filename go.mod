@@ -3,13 +3,13 @@ module github.com/Gaardsholt/pass-along
 go 1.27.0
 
 require (
-	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/gomodule/redigo v1.9.3
 	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/rs/zerolog v1.35.1
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	gotest.tools v2.2.0+incompatible
 )
 
