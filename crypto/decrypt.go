@@ -4,10 +4,19 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"fmt"
+
+	"github.com/Gaardsholt/pass-along/config"
 )
 
 func Decrypt(data []byte, encryptionKey string) (decryptedData []byte, err error) {
-	key := deriveKey(encryptionKey)
+	return decryptWithSalt(data, encryptionKey, config.Config.ServerSalt)
+}
+
+func decryptWithSalt(data []byte, encryptionKey, salt string) (decryptedData []byte, err error) {
+	key, err := deriveKey(encryptionKey, salt)
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := aes.NewCipher(key)
 	if err != nil {

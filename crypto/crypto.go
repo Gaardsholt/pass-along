@@ -2,15 +2,13 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/pbkdf2"
 	"crypto/sha512"
 	"encoding/gob"
-
-	"github.com/Gaardsholt/pass-along/config"
-	"golang.org/x/crypto/pbkdf2"
 )
 
-func deriveKey(passphrase string) []byte {
-	return pbkdf2.Key([]byte(passphrase), []byte(config.Config.ServerSalt), 300000, 32, sha512.New)
+func deriveKey(passphrase, salt string) ([]byte, error) {
+	return pbkdf2.Key(sha512.New, passphrase, []byte(salt), 300000, 32)
 }
 
 func getBytes(key interface{}) ([]byte, error) {
