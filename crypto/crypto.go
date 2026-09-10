@@ -5,12 +5,10 @@ import (
 	"crypto/pbkdf2"
 	"crypto/sha512"
 	"encoding/gob"
-
-	"github.com/Gaardsholt/pass-along/config"
 )
 
-func deriveKey(passphrase string) ([]byte, error) {
-	return pbkdf2.Key(sha512.New, passphrase, []byte(config.Config.ServerSalt), 300000, 32)
+func deriveKey(passphrase, salt string) ([]byte, error) {
+	return pbkdf2.Key(sha512.New, passphrase, []byte(salt), 300000, 32)
 }
 
 func getBytes(key interface{}) ([]byte, error) {

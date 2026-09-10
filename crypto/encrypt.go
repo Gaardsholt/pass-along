@@ -5,6 +5,8 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
+
+	"github.com/Gaardsholt/pass-along/config"
 )
 
 func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, err error) {
@@ -12,7 +14,7 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 	if err != nil {
 		return nil, err
 	}
-	key, err := deriveKey(encryptionKey)
+	key, err := deriveKey(encryptionKey, config.Config.ServerSalt)
 	if err != nil {
 		return nil, err
 	}
