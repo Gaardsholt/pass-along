@@ -1,6 +1,6 @@
 module github.com/Gaardsholt/pass-along
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.39.0
