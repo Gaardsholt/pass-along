@@ -14,7 +14,12 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 	if err != nil {
 		return nil, err
 	}
-	key, err := deriveKey(encryptionKey, config.Config.ServerSalt)
+
+	return encryptWithSalt(byteArray, encryptionKey, config.Config.ServerSalt)
+}
+
+func encryptWithSalt(data []byte, encryptionKey, salt string) (encryptedSecret []byte, err error) {
+	key, err := deriveKey(encryptionKey, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +39,6 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 		return nil, err
 	}
 
-	encryptedSecret = gcm.Seal(nonce, nonce, byteArray, nil)
+	encryptedSecret = gcm.Seal(nonce, nonce, data, nil)
 	return
 }

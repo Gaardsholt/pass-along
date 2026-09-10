@@ -9,7 +9,11 @@ import (
 )
 
 func Decrypt(data []byte, encryptionKey string) (decryptedData []byte, err error) {
-	key, err := deriveKey(encryptionKey, config.Config.ServerSalt)
+	return decryptWithSalt(data, encryptionKey, config.Config.ServerSalt)
+}
+
+func decryptWithSalt(data []byte, encryptionKey, salt string) (decryptedData []byte, err error) {
+	key, err := deriveKey(encryptionKey, salt)
 	if err != nil {
 		return nil, err
 	}
