@@ -12,7 +12,10 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 	if err != nil {
 		return nil, err
 	}
-	key := deriveKey(encryptionKey)
+	key, err := deriveKey(encryptionKey)
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := aes.NewCipher(key)
 	if err != nil {

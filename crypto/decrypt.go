@@ -7,7 +7,10 @@ import (
 )
 
 func Decrypt(data []byte, encryptionKey string) (decryptedData []byte, err error) {
-	key := deriveKey(encryptionKey)
+	key, err := deriveKey(encryptionKey)
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := aes.NewCipher(key)
 	if err != nil {
