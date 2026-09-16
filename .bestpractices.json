@@ -7,6 +7,8 @@
   "report_url_justification": "Defects and enhancements are tracked via GitHub issues at https://github.com/Gaardsholt/pass-along/issues",
   "report_tracker_status": "Met",
   "report_tracker_justification": "GitHub Issues is used as the issue tracker for bugs and feature requests: https://github.com/Gaardsholt/pass-along/issues",
+  "report_process_status": "Met",
+  "report_process_justification": "Bug reports are submitted and tracked via GitHub Issues at https://github.com/Gaardsholt/pass-along/issues as described in the contributing guidelines.",
   "report_responses_status": "Met",
   "report_responses_justification": "The maintainer actively responds to all submitted bug reports and discussions on GitHub.",
   "enhancement_responses_status": "Met",
