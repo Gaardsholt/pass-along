@@ -19,7 +19,7 @@ Do **not** report security vulnerabilities through public GitHub issues.
 
 Please submit vulnerabilities privately via:
 
-1. **GitHub Private Vulnerability Reporting**: Use the **Security** tab of this repository and select **Report a vulnerability** (GitHub Security Advisories).
+1. **GitHub Private Vulnerability Reporting**: Use the **Security** tab of this repository and select **Report a vulnerability**, or go directly to https://github.com/Gaardsholt/pass-along/security/advisories/new.
 
 ### Response Time and Process
 
