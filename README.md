@@ -2,9 +2,16 @@
 
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7427/badge)](https://bestpractices.coreinfrastructure.org/projects/7427)
 
+Easy and secure way of sending secrets and files.
+
 The external server serves the API and static UI on port `8080` by default.
 
 The internal server serves `/healthz`, `/readyz`, and `/metrics` on port `8888` by default.
+
+## Contributing and Security
+
+- [Contributing guidelines](CONTRIBUTING.md): Details on building, running tests, code formatting, and pull request requirements.
+- [Security policy](SECURITY.md): Instructions for coordinated and private disclosure of vulnerabilities.
 
 ## Server config
 
