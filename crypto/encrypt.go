@@ -5,6 +5,8 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
+
+	"github.com/Gaardsholt/pass-along/config"
 )
 
 func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, err error) {
@@ -12,7 +14,15 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 	if err != nil {
 		return nil, err
 	}
-	key := deriveKey(encryptionKey)
+
+	return encryptWithSalt(byteArray, encryptionKey, config.Config.ServerSalt)
+}
+
+func encryptWithSalt(data []byte, encryptionKey, salt string) (encryptedSecret []byte, err error) {
+	key, err := deriveKey(encryptionKey, salt)
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := aes.NewCipher(key)
 	if err != nil {
@@ -29,6 +39,6 @@ func Encrypt(data interface{}, encryptionKey string) (encryptedSecret []byte, er
 		return nil, err
 	}
 
-	encryptedSecret = gcm.Seal(nonce, nonce, byteArray, nil)
+	encryptedSecret = gcm.Seal(nonce, nonce, data, nil)
 	return
 }
